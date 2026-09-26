@@ -6,9 +6,10 @@ link-building & digital PR outreach target list.
 
 Features:
 - Dual-mode Search Grounding + AI Web Citation Fallback
+- Deep On-Page Analysis (Title, H1, Competitor Gaps, Pitch Type, Contacts, Dates, Outbound Links)
 - Gemini Token Usage Tracker & Rate-Limit Quota Counter
-- Priority Link Target Scoring & Competitor Gap Analysis
-- Run Persistence & Offline Demo Viewer
+- Priority Link Target Scoring (+5 Boost for Competitor Gap Pages)
+- Run & Page Analysis Cache Persistence & Offline Demo Viewer
 
 Run:  streamlit run app.py
 """
@@ -31,6 +32,11 @@ try:
     load_dotenv()
 except ImportError:
     pass
+
+from page_analysis import (
+    analyse_all_cited_pages,
+    merge_page_analysis_into_domains
+)
 
 
 # ----------------------------------------------------------------------------
@@ -76,7 +82,7 @@ def init_token_tracker():
             "candidates_tokens": 0,
             "total_tokens": 0,
             "requests_count": 0,
-            "history": []  # List of event dicts
+            "history": []
         }
 
 
@@ -238,7 +244,7 @@ def extract_grounding_citations(grounding_meta: dict) -> list[str]:
         title = (web.get("title") or "").strip()
 
         found_url = ""
-        # 1. Inspect title: often Gemini places the clean source domain as the title
+        # 1. Inspect title
         if title:
             if "." in title and " " not in title and not title.endswith("."):
                 found_url = "https://" + title if not title.startswith("http") else title
@@ -247,7 +253,7 @@ def extract_grounding_citations(grounding_meta: dict) -> list[str]:
                 if match:
                     found_url = "https://" + match.group(1)
 
-        # 2. Inspect URI: if URI is not a vertex redirect, use it directly
+        # 2. Inspect URI
         if not found_url and uri:
             parsed_host = urlparse(uri).netloc.lower()
             if "vertexaisearch.cloud.google.com" not in parsed_host and "google.com" not in parsed_host:
@@ -659,6 +665,11 @@ def analyse(
             "cited_where_competitor_wins": comp_win_count,
             "action": action_bucket,
             "top_urls": top_urls_str,
+            "competitor_gap_pages": 0,
+            "best_pitch_type": "Niche edit" if action_bucket.startswith("Outreach") else ("Directory listing" if action_bucket.startswith("Directory") else "Community / UGC"),
+            "contact": "",
+            "guest_post_url": "",
+            "newest_last_updated": ""
         })
 
     table = pd.DataFrame(summary_rows)
@@ -696,7 +707,7 @@ def analyse(
 
 
 # ----------------------------------------------------------------------------
-# Persistence Helpers
+# Persistence Helpers & Cache Management
 # ----------------------------------------------------------------------------
 RUNS_DIR = "runs"
 
@@ -715,9 +726,47 @@ def get_available_runs() -> list[str]:
     """Retrieve list of saved run JSON filenames."""
     if not os.path.exists(RUNS_DIR):
         return []
-    files = glob.glob(os.path.join(RUNS_DIR, "*.json"))
+    files = glob.glob(os.path.join(RUNS_DIR, "run_*.json")) + glob.glob(os.path.join(RUNS_DIR, "sample_*.json"))
     files.sort(key=os.path.getmtime, reverse=True)
     return files
+
+
+def get_page_cache_path(run_data: dict, selected_file_path: str = None) -> str:
+    """Generate or locate matching pages cache file path."""
+    os.makedirs(RUNS_DIR, exist_ok=True)
+    if selected_file_path:
+        base = os.path.splitext(os.path.basename(selected_file_path))[0]
+        return os.path.join(RUNS_DIR, f"pages_{base}.json")
+    created = run_data.get("created", "")
+    if created:
+        clean_ts = re.sub(r"[^0-9]", "", created)[:14]
+        return os.path.join(RUNS_DIR, f"pages_run_{clean_ts}.json")
+    return os.path.join(RUNS_DIR, "pages_latest.json")
+
+
+def load_cached_pages(cache_path: str) -> pd.DataFrame:
+    """Load cached pages DataFrame if present."""
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, list):
+                return pd.DataFrame(data)
+        except Exception:
+            pass
+    return pd.DataFrame()
+
+
+def save_cached_pages(pages_df: pd.DataFrame, cache_path: str):
+    """Save pages DataFrame to JSON cache."""
+    if not pages_df.empty:
+        os.makedirs(RUNS_DIR, exist_ok=True)
+        try:
+            records = pages_df.to_dict(orient="records")
+            with open(cache_path, "w", encoding="utf-8") as f:
+                json.dump(records, f, indent=2)
+        except Exception:
+            pass
 
 
 # ----------------------------------------------------------------------------
@@ -756,6 +805,13 @@ def main():
             border: 1px solid rgba(30, 136, 229, 0.2);
             margin-bottom: 12px;
         }
+        .analyse-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.06), rgba(59, 130, 246, 0.06));
+            border-radius: 12px;
+            padding: 18px 22px;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            margin: 15px 0px 20px 0px;
+        }
         .stTabs [data-baseweb="tab-list"] {
             gap: 12px;
         }
@@ -770,7 +826,7 @@ def main():
     # Header
     st.markdown('<div class="main-header">🎯 AI Citation Link Prospector</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="sub-header">Discover which authority websites Google Gemini cites with Search Grounding & Web AI — and convert them into prioritized link targets.</div>',
+        '<div class="sub-header">Discover which authority websites Google Gemini cites with Search Grounding & Web AI — and convert them into prioritized outreach lists with deep on-page analysis.</div>',
         unsafe_allow_html=True
     )
 
@@ -903,7 +959,18 @@ def main():
                     try:
                         with open(selected_file, "r", encoding="utf-8") as f:
                             st.session_state["run"] = json.load(f)
+                        st.session_state["run_source_file"] = selected_file
+                        
+                        # Load matching page analysis cache if available
+                        cache_path = get_page_cache_path(st.session_state["run"], selected_file)
+                        cached_pages_df = load_cached_pages(cache_path)
+                        if not cached_pages_df.empty:
+                            st.session_state["pages_df"] = cached_pages_df
+                        else:
+                            st.session_state.pop("pages_df", None)
+
                         st.success(f"Loaded {os.path.basename(selected_file)}")
+                        st.rerun()
                     except Exception as e:
                         st.error(f"Error loading run: {e}")
 
@@ -912,6 +979,16 @@ def main():
         if uploaded_run:
             try:
                 st.session_state["run"] = json.load(uploaded_run)
+                st.session_state["run_source_file"] = uploaded_run.name
+                
+                # Check for cached pages
+                cache_path = get_page_cache_path(st.session_state["run"], uploaded_run.name)
+                cached_pages_df = load_cached_pages(cache_path)
+                if not cached_pages_df.empty:
+                    st.session_state["pages_df"] = cached_pages_df
+                else:
+                    st.session_state.pop("pages_df", None)
+
                 st.success("Uploaded run loaded successfully!")
             except Exception as e:
                 st.error(f"Invalid JSON file: {e}")
@@ -1046,6 +1123,8 @@ def main():
 
         saved_path = save_run(run_payload)
         st.session_state["run"] = run_payload
+        st.session_state["run_source_file"] = saved_path
+        st.session_state.pop("pages_df", None)
         st.success(f"🎉 Run complete! Saved results to `{saved_path}` (Tokens Used: {run_total_tokens:,})")
 
     # ------------------------------------------------------------------------
@@ -1066,6 +1145,28 @@ def main():
 
     table, sov_df = analyse(records, client_dict, comp_list, inventory, repeats=rep_count)
     errors = [r for r in records if r.get("error")]
+
+    # Collect all unique URLs cited across this run
+    all_cited_urls = []
+    for r in records:
+        for u in r.get("urls", []):
+            if u:
+                all_cited_urls.append(u)
+    unique_cited_urls = list(dict.fromkeys([clean_url(u) for u in all_cited_urls if u]))
+
+    # Check for cached page analysis if not already in session state
+    run_source = st.session_state.get("run_source_file", "")
+    page_cache_path = get_page_cache_path(current_run, run_source)
+    if "pages_df" not in st.session_state or st.session_state["pages_df"].empty:
+        cached_df = load_cached_pages(page_cache_path)
+        if not cached_df.empty:
+            st.session_state["pages_df"] = cached_df
+
+    pages_df = st.session_state.get("pages_df", pd.DataFrame())
+
+    # If page analysis is available, merge into domain table and boost priority score (+5 per gap page)
+    if not pages_df.empty:
+        table = merge_page_analysis_into_domains(table, pages_df)
 
     st.divider()
     st.subheader(f"📊 Results — {current_run.get('service', 'Niche')} in {current_run.get('location', 'Market')}")
@@ -1091,6 +1192,61 @@ def main():
     with m4:
         st.metric("Client Share of Voice", client_sov, help="% of answers mentioning client brand")
 
+    # ------------------------------------------------------------------------
+    # On-Page Analysis Action Section (New Phase Feature)
+    # ------------------------------------------------------------------------
+    st.markdown("""
+    <div class="analyse-card">
+        <h4 style="margin-top:0px; margin-bottom:6px; color:#10B981;">🔍 Deep On-Page Analysis (Outreach Intelligence)</h4>
+        <p style="margin-bottom:12px; font-size:0.92rem; color:#475569;">
+            Scrapes every AI-cited page to discover <strong>Competitor Gap URLs</strong> (where competitors are featured but your brand is omitted), 
+            extracts verified <strong>Outreach Contacts & Emails</strong>, identifies <strong>Guest Post / Write-For-Us opportunities</strong>, 
+            detects <strong>Last Updated Dates</strong>, and boosts domain priority scores (+5 per gap page).
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    acol1, acol2 = st.columns([1, 3])
+    with acol1:
+        analyse_btn_label = "🔍 Analyse Cited Pages" if pages_df.empty else "🔄 Re-analyse Cited Pages"
+        if st.button(analyse_btn_label, type="primary" if pages_df.empty else "secondary", use_container_width=True):
+            if not unique_cited_urls:
+                st.warning("No URLs found to analyze.")
+            else:
+                page_bar = st.progress(0.0)
+                page_status = st.empty()
+
+                analysed_pages = analyse_all_cited_pages(
+                    urls=unique_cited_urls,
+                    root_domain_fn=root_domain,
+                    clean_url_fn=clean_url,
+                    mentions_fn=mentions,
+                    client=client_dict,
+                    competitors=comp_list,
+                    directory_domains=DIRECTORY_DOMAINS,
+                    ugc_domains=UGC_DOMAINS,
+                    progress_callback=lambda p, msg: (page_bar.progress(p), page_status.text(msg))
+                )
+
+                save_cached_pages(analysed_pages, page_cache_path)
+                st.session_state["pages_df"] = analysed_pages
+                st.success(f"🎉 Successfully analyzed {len(analysed_pages)} pages! Found {int(analysed_pages['competitor_gap'].sum())} competitor gap opportunities.")
+                st.rerun()
+
+    with acol2:
+        if not pages_df.empty:
+            gaps_found = int(pages_df["competitor_gap"].sum())
+            contacts_found = int((pages_df["contact"] != "").sum())
+            gp_found = int((pages_df["guest_post_url"] != "").sum())
+            st.markdown(
+                f"✅ **On-Page Analysis Active:** `{len(pages_df)}` pages analyzed | "
+                f"⚔️ **`{gaps_found}` Competitor Gaps** | "
+                f"📧 **`{contacts_found}` Contacts** | "
+                f"✍️ **`{gp_found}` Guest Post Links**"
+            )
+        else:
+            st.caption(f"💡 `{len(unique_cited_urls)}` unique cited pages ready to be scraped and analyzed for competitor gaps and contacts.")
+
     # Failed queries expander (if any)
     if errors:
         with st.expander(f"⚠️ {len(errors)} Queries Encountered Errors", expanded=True):
@@ -1110,16 +1266,22 @@ def main():
                 try:
                     with open("runs/sample_link_building_uk.json", "r", encoding="utf-8") as f:
                         st.session_state["run"] = json.load(f)
+                    st.session_state["run_source_file"] = "runs/sample_link_building_uk.json"
+                    sample_cache = "runs/pages_sample_link_building_uk.json"
+                    cached_p = load_cached_pages(sample_cache)
+                    if not cached_p.empty:
+                        st.session_state["pages_df"] = cached_p
                     st.rerun()
                 except Exception as e:
                     st.error(f"Could not load demo: {e}")
         return
 
     # ------------------------------------------------------------------------
-    # Detailed Result Tabs
+    # Detailed Result Tabs (6 Tabs)
     # ------------------------------------------------------------------------
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "🎯 Link Targets",
+        "⚔️ Competitor Gaps",
         "📢 Share of Voice",
         "📊 Action Mix",
         "📝 Raw Answers & Citations",
@@ -1128,34 +1290,46 @@ def main():
 
     # Tab 1: Link Targets
     with tab1:
-        st.markdown("### Prioritised Link Targets & Citations")
+        st.markdown("### Prioritised Link Targets & Outreach List")
+        st.caption("Domains cited by Gemini, enriched with on-page competitor gaps, pitch types, and outreach contacts.")
         
         # Filters
-        fcol1, fcol2 = st.columns([2, 2])
+        fcol1, fcol2, fcol3 = st.columns([2, 2, 2])
         with fcol1:
             all_actions = sorted(table["action"].unique())
-            selected_actions = st.multiselect("Filter by Action Bucket", options=all_actions, default=all_actions)
+            selected_actions = st.multiselect("Filter by Action Category", options=all_actions, default=all_actions)
         with fcol2:
-            search_query = st.text_input("Search Domain or URL", placeholder="e.g. reddit, clutch, tech...")
+            all_pitch_types = sorted(table["best_pitch_type"].unique()) if "best_pitch_type" in table.columns else ["List inclusion", "Directory listing", "Guest post", "Niche edit", "Community / UGC"]
+            selected_pitch = st.multiselect("Filter by Pitch Type", options=all_pitch_types, default=all_pitch_types)
+        with fcol3:
+            search_query = st.text_input("Search Domain, Contact, or URL", placeholder="e.g. clutch, editor@..., tech...")
 
         filtered_table = table[table["action"].isin(selected_actions)]
+        if "best_pitch_type" in filtered_table.columns and selected_pitch:
+            filtered_table = filtered_table[filtered_table["best_pitch_type"].isin(selected_pitch)]
+
         if search_query:
             filtered_table = filtered_table[
                 filtered_table["domain"].str.contains(search_query, case=False, na=False) |
-                filtered_table["top_urls"].str.contains(search_query, case=False, na=False)
+                filtered_table["top_urls"].str.contains(search_query, case=False, na=False) |
+                filtered_table["contact"].str.contains(search_query, case=False, na=False)
             ]
 
+        # Display interactive dataframe with rich columns
         st.dataframe(
             filtered_table,
             use_container_width=True,
             hide_index=True,
             column_config={
                 "domain": st.column_config.TextColumn("Root Domain", width="medium"),
-                "priority_score": st.column_config.NumberColumn("Priority Score", format="%.1f"),
-                "citations": st.column_config.NumberColumn("Total Citations"),
-                "prompts_cited_in": st.column_config.NumberColumn("Prompts Cited In"),
-                "consistency_pct": st.column_config.NumberColumn("Consistency %", format="%.1f%%"),
-                "cited_where_competitor_wins": st.column_config.NumberColumn("Competitor Gap Wins"),
+                "priority_score": st.column_config.NumberColumn("Priority Score", format="%.1f", help="Base citations + prompts + competitor gaps (+5 per gap page)"),
+                "citations": st.column_config.NumberColumn("Citations"),
+                "prompts_cited_in": st.column_config.NumberColumn("Prompts"),
+                "competitor_gap_pages": st.column_config.NumberColumn("Gap Pages", help="Number of pages where competitors are featured but client is omitted"),
+                "best_pitch_type": st.column_config.TextColumn("Pitch Type", width="medium"),
+                "contact": st.column_config.TextColumn("Contact / Email", width="medium"),
+                "guest_post_url": st.column_config.LinkColumn("Guest Post URL", width="medium"),
+                "newest_last_updated": st.column_config.TextColumn("Last Updated"),
                 "action": st.column_config.TextColumn("Action Category", width="medium"),
                 "top_urls": st.column_config.TextColumn("Top Cited URLs", width="large"),
             }
@@ -1167,18 +1341,62 @@ def main():
             data=csv_data,
             file_name=f"gemini_link_targets_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
             mime="text/csv",
-            type="secondary"
+            type="primary"
         )
 
-        st.markdown("#### Top 15 Most Cited Domains")
+        st.markdown("#### Top 15 Most Prioritised Domains")
         top15 = table.head(15)
         st.bar_chart(
-            data=top15.set_index("domain")["citations"],
+            data=top15.set_index("domain")["priority_score"],
             use_container_width=True
         )
 
-    # Tab 2: Share of Voice
+    # Tab 2: Competitor Gaps (New Dedicated Tab)
     with tab2:
+        st.markdown("### ⚔️ Competitor Gap Opportunities")
+        st.caption("Exact cited URLs where competitor brands are linked or named, but your client brand is omitted. These represent your highest-ROI link outreach targets.")
+
+        if pages_df.empty:
+            st.info("💡 Click the **'🔍 Analyse Cited Pages'** button above to crawl cited URLs and extract competitor gap pages.")
+        else:
+            gap_pages = pages_df[pages_df["competitor_gap"] == True].copy()
+            if gap_pages.empty:
+                st.success("🎉 No competitor gaps detected — your brand is either mentioned across all competitor pages or no competitors were cited!")
+            else:
+                st.markdown(f"Found **{len(gap_pages)} high-intent competitor gap pages** ready for outreach pitching:")
+                
+                # Format competitors_present into clean string for display
+                gap_pages["competitors_list"] = gap_pages["competitors_present"].apply(lambda lst: ", ".join(lst) if isinstance(lst, list) else str(lst))
+
+                st.dataframe(
+                    gap_pages,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "url": st.column_config.LinkColumn("Page URL", width="large"),
+                        "domain": st.column_config.TextColumn("Domain"),
+                        "page_title": st.column_config.TextColumn("Page Title", width="large"),
+                        "competitors_list": st.column_config.TextColumn("Competitors Featured", width="medium"),
+                        "pitch_type": st.column_config.TextColumn("Pitch Strategy"),
+                        "contact": st.column_config.TextColumn("Outreach Contact", width="medium"),
+                        "last_updated": st.column_config.TextColumn("Date Updated"),
+                        "word_count": st.column_config.NumberColumn("Word Count"),
+                        "sponsored_or_nofollow_share": st.column_config.NumberColumn("Nofollow %", format="%.1f%%"),
+                        "fetch_status": st.column_config.TextColumn("Status")
+                    }
+                )
+
+                gap_csv = gap_pages.to_csv(index=False).encode("utf-8")
+                st.download_button(
+                    label="📥 Download Competitor Gaps CSV",
+                    data=gap_csv,
+                    file_name=f"competitor_gaps_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv",
+                    type="primary"
+                )
+
+    # Tab 3: Share of Voice
+    with tab3:
         st.markdown("### Brand Share of Voice Comparison")
         st.caption("Percentage of valid Gemini answers that directly mention each brand.")
         
@@ -1201,8 +1419,8 @@ def main():
         else:
             st.info("No brand names provided to calculate Share of Voice.")
 
-    # Tab 3: Action Mix
-    with tab3:
+    # Tab 4: Action Mix
+    with tab4:
         st.markdown("### Citation Action Distribution")
         st.caption("Breakdown of cited websites across outreach types, UGC platforms, directories, and competitors.")
         
@@ -1213,8 +1431,8 @@ def main():
             use_container_width=True
         )
 
-    # Tab 4: Raw Answers & Citations
-    with tab4:
+    # Tab 5: Raw Answers & Citations
+    with tab5:
         st.markdown("### Full Gemini Answers & Grounding Citations")
         for i, r in enumerate(records):
             if r.get("error"):
@@ -1231,8 +1449,8 @@ def main():
                 else:
                     st.caption("No explicit source links extracted.")
 
-    # Tab 5: Token & Quota Monitor (Extension Feature)
-    with tab5:
+    # Tab 6: Token & Quota Monitor
+    with tab6:
         st.markdown("### ⚡ Gemini Token Consumption & Quota Monitor")
         st.caption("Detailed token usage breakdown, rate limit metrics, and free-tier quota analysis for this campaign.")
 

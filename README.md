@@ -2,41 +2,48 @@
 
 **AI Citation Link Prospector** is a specialised SEO & Digital PR intelligence tool designed to reverse-engineer Google Gemini's AI citations (via Google Search Grounding) for any niche and geographic market.
 
-It identifies the exact websites Gemini cites when answering high-intent buyer and research queries, categorises them, and calculates actionable **Priority Link-Building & Outreach Scores**.
+It identifies the exact websites Gemini cites when answering high-intent buyer and research queries, categorises them, scrapes and analyses each cited page, and calculates actionable **Priority Link-Building & Outreach Scores**.
 
 ---
 
 ## 🌟 Key Features
 
-- **Gemini-First Search Grounding**: Direct REST API integration with `gemini-2.5-flash` using Google Search tools (`google_search`).
+- **Gemini-First Search Grounding & Citation Fallback**:
+  - Direct REST API integration with Gemini models (`gemini-3.1-flash-lite`, `gemini-2.5-flash`, etc.) using Google Search tools (`google_search`).
+  - Seamless AI citation parsing fallback to guarantee zero failures on free-tier keys.
+- **Deep On-Page Analysis & Outreach Intelligence**:
+  - Scrapes each AI-cited URL with 1-second domain pacing and Chrome user-agent headers.
+  - Skips UGC domains (Reddit, YouTube, Quora, Wikipedia, LinkedIn, Medium, Facebook, X/Twitter, etc.).
+  - Extracts **Page Title**, **H1**, and main content **Word Count**.
+  - Checks if the page links to or mentions your client brand.
+  - Detects **Competitors Present** and flags high-priority **Competitor Gaps** (where competitors are featured but your brand is omitted).
+  - Rule-based **Pitch Type Classification**:
+    - *"List inclusion"* (Top/Best lists)
+    - *"Directory listing"* (Clutch, G2, Trustpilot, etc.)
+    - *"Guest post"* (Detects Write-For-Us/Contribute links on page or homepage)
+    - *"Niche edit"*
+  - **Contact & Email Discovery**: Discovers `mailto:` emails from the page/homepage or contact page URLs.
+  - **Freshness Detection**: Extracts `last_updated` date from OpenGraph, JSON-LD schemas (`dateModified`/`datePublished`), or `<time>` tags.
+  - **Outbound Link Profiling**: Counts external links and calculates `% Sponsored / Nofollow` share.
+- **Domain-Level Roll-Up & Enhanced Priority Scoring**:
+  - Aggregates page analysis into the domain target table: `competitor_gap_pages`, `best_pitch_type`, `contact`, `guest_post_url`, `newest_last_updated`.
+  - **Boosted Priority Score Formula**:
+    $$\text{Priority Score} = \text{Citations} + (2 \times \text{Prompts}) + (2 \times \text{Competitor Wins}) + \frac{\text{Consistency \%}}{25} + (5 \times \text{Competitor Gap Pages})$$
 - **Free-Tier Rate Limiting Safety**:
   - Sequential requests with configurable pacing delay (default: 6.0 seconds).
   - Automatic exponential retry on HTTP 429 (`ResourceExhausted`), waiting 20 seconds up to 3 times before failing safely.
   - Transparent error logging without application crashes.
-- **Smart Prompt Generator**: Generates varied, realistic buyer-intent queries (comparisons, best-of, selection criteria, pricing, trust) with fallback templates.
-- **Prompt Repeat Consistency**: Runs queries across multiple iterations to determine consistency (%) and ranking stability of cited domains.
-- **Competitor Gap & Share of Voice Analysis**:
-  - Detects when competitors win mentions in Gemini answers where the client is omitted (`cited_where_competitor_wins`).
-  - Measures brand Share of Voice (SoV %) across all answers.
-- **Intelligent Domain Classification**:
-  - **Client's Own Site**
-  - **Competitor Sites**
-  - **Community / UGC** (Reddit, Quora, YouTube, LinkedIn, Medium, Wikipedia...) → *Brand mention play*
-  - **Directory / Review** (Clutch, G2, Trustpilot, Yelp, GoodFirms, DesignRush...) → *Get listed*
-  - **Publisher Inventory** (matched against your uploaded CSV) → *Pitch now*
-  - **Outreach Targets** → *Link outreach target*
-- **Gemini Token Usage & Rate Limit Counter (Extension Feature)**:
-  - Tracks exact **Input (Prompt) Tokens**, **Output (Candidate) Tokens**, and **Total Tokens** from Gemini API `usageMetadata`.
-  - Real-time **Requests Per Minute (RPM)** and **Daily Request Quota (RPD)** visual progress gauges.
-  - Live **Estimated API Cost calculator** (Flash rates vs Free Tier: $0.00).
-  - Dedicated **⚡ Token & Quota Monitor Tab** with per-query token breakdowns, visual distribution charts, and CSV report export.
-  - Sidebar live widget with real-time rate meters and instant counter reset button.
-- **Priority Scoring Formula**:
-  $$\text{Priority Score} = \text{Citations} + (2 \times \text{Prompts Cited In}) + (2 \times \text{Competitor Wins}) + \frac{\text{Consistency \%}}{25}$$
-- **Run Persistence & Demo Viewer**:
+- **Dedicated Interactive Tabs**:
+  - 🎯 **Link Targets**: Prioritised domain outreach list with action & pitch type filters, contact info, and CSV download.
+  - ⚔️ **Competitor Gaps**: Dedicated outreach table of exact URLs featuring competitors without your brand, with direct CSV export.
+  - 📢 **Share of Voice**: Brand mention comparison and SoV % metrics.
+  - 📊 **Action Mix**: Visual distribution of target categories.
+  - 📝 **Raw Answers & Citations**: Complete grounding queries, AI answers, and source citations.
+  - ⚡ **Token & Quota Monitor**: Per-query token breakdown, live RPM/RPD meters, and cost estimation.
+- **Run & Page Analysis Cache Persistence**:
   - Every run is automatically saved to `runs/<timestamp>.json`.
-  - Sidebar file uploader and selector allows reloading any past run instantly for offline presentations and reporting.
-- **Export Ready**: Instant CSV target list download with domain priority metrics and top cited URLs.
+  - Page analysis is cached to `runs/pages_<run_timestamp>.json` so pages are never re-scraped unnecessarily.
+  - Offline demo viewer loads sample runs and pre-scraped page analysis instantly.
 
 ---
 
@@ -47,7 +54,7 @@ It identifies the exact websites Gemini cites when answering high-intent buyer a
 Ensure Python 3.10+ is installed:
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/Digital4local/ai-Link-building-tool.git
 cd "Ai Ciataion Prospect"
 pip install -r requirements.txt
 ```
@@ -85,14 +92,14 @@ streamlit run app.py
    - Adjust number of prompts (5–30) and repeats per prompt (1–3).
 
 3. **Run Campaign**:
-   - Click **Run Gemini Citation Analysis**.
+   - Click **Run Gemini Citation Prospector**.
    - Monitor the real-time progress bar with rate-limiting pacing.
 
-4. **Explore & Export Targets**:
-   - Review top domains in the **Link Targets** tab.
-   - Filter by Action type (e.g., outreach targets, review sites, UGC).
-   - Inspect competitor gap analysis in **Share of Voice**.
-   - Download the target list as CSV for your outreach CRM.
+4. **Analyse Cited Pages (Outreach Intelligence)**:
+   - Click **🔍 Analyse Cited Pages** to crawl cited URLs.
+   - Inspect competitor gap URLs in the **⚔️ Competitor Gaps** tab.
+   - Filter by pitch strategy (*List inclusion*, *Guest post*, *Directory*, *Niche edit*) in **🎯 Link Targets**.
+   - Download the enriched CSV target list for direct outreach execution.
 
 ---
 
@@ -102,3 +109,4 @@ streamlit run app.py
 - **Headers**: `x-goog-api-key`, `Content-Type: application/json`
 - **Payload**: `{"contents": [{"parts": [{"text": prompt}]}], "tools": [{"google_search": {}}]}`
 - **Citation Extraction**: Extracts source domains from `candidates[0].groundingMetadata.groundingChunks[].web`, resolving Vertex Search redirects and extracting canonical root domains.
+- **On-Page Scraper**: Python `requests` + `BeautifulSoup4` with `lxml` parser, SSL fallback, and 1s domain delay.
