@@ -1,0 +1,80 @@
+{
+  "campaign_id": "digital-web-solutions-link-building-agencies-the-uk",
+  "created": "2026-09-25T14:30:00",
+  "client": {
+    "name": "Digital Web Solutions",
+    "domain": "digitalwebsolutions.com"
+  },
+  "service": "link building agencies",
+  "location": "the UK",
+  "markets": [
+    "the UK"
+  ],
+  "competitors": [
+    {
+      "name": "FatJoe",
+      "domain": "fatjoe.com"
+    },
+    {
+      "name": "Siege Media",
+      "domain": "siegemedia.com"
+    },
+    {
+      "name": "Page One Power",
+      "domain": "pageonepower.com"
+    }
+  ],
+  "prompts": [
+    "What are the best link building agencies in the UK?",
+    "Top rated link building agencies in the UK \u2014 who do people recommend?",
+    "How do I choose between link building agencies in the UK?"
+  ],
+  "repeats": 1,
+  "model": "gemini-3.1-flash-lite",
+  "total_tokens": 1650,
+  "records": [
+    {
+      "prompt_index": 0,
+      "prompt": "What are the best link building agencies in the UK?",
+      "repeat": 1,
+      "market": "the UK",
+      "answer": "Top-tier UK link building agencies include Digital Web Solutions, FatJoe, and Siege Media. Digital Web Solutions is highly rated for bespoke white-label campaigns, while FatJoe provides scalable outreach.",
+      "urls": [
+        "https://digitalwebsolutions.com/link-building-services/",
+        "https://fatjoe.com",
+        "https://siegemedia.com",
+        "https://clutch.co/uk/seo-firms",
+        "https://hubspot.com/blog/link-building"
+      ],
+      "error": ""
+    },
+    {
+      "prompt_index": 1,
+      "prompt": "Top rated link building agencies in the UK \u2014 who do people recommend?",
+      "repeat": 1,
+      "market": "the UK",
+      "answer": "Clients recommend Digital Web Solutions for high-intent B2B link acquisition, alongside FatJoe and Click Intelligence.",
+      "urls": [
+        "https://digitalwebsolutions.com",
+        "https://fatjoe.com",
+        "https://clickintelligence.co.uk",
+        "https://searchengineland.com/link-building-guide"
+      ],
+      "error": ""
+    },
+    {
+      "prompt_index": 2,
+      "prompt": "How do I choose between link building agencies in the UK?",
+      "repeat": 1,
+      "market": "the UK",
+      "answer": "Compare agency domain authority criteria, review profiles on Clutch and Trustpilot, and inspect proven client results from Digital Web Solutions.",
+      "urls": [
+        "https://clutch.co",
+        "https://trustpilot.com",
+        "https://digitalwebsolutions.com",
+        "https://moz.com/blog/link-building"
+      ],
+      "error": ""
+    }
+  ]
+}

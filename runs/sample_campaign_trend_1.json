@@ -1,0 +1,77 @@
+{
+  "campaign_id": "digital-web-solutions-link-building-agencies-the-uk",
+  "created": "2026-09-01T09:00:00",
+  "client": {
+    "name": "Digital Web Solutions",
+    "domain": "digitalwebsolutions.com"
+  },
+  "service": "link building agencies",
+  "location": "the UK",
+  "markets": [
+    "the UK"
+  ],
+  "competitors": [
+    {
+      "name": "FatJoe",
+      "domain": "fatjoe.com"
+    },
+    {
+      "name": "Siege Media",
+      "domain": "siegemedia.com"
+    },
+    {
+      "name": "Page One Power",
+      "domain": "pageonepower.com"
+    }
+  ],
+  "prompts": [
+    "What are the best link building agencies in the UK?",
+    "Top rated link building agencies in the UK \u2014 who do people recommend?",
+    "How do I choose between link building agencies in the UK?"
+  ],
+  "repeats": 1,
+  "model": "gemini-3.1-flash-lite",
+  "total_tokens": 1420,
+  "records": [
+    {
+      "prompt_index": 0,
+      "prompt": "What are the best link building agencies in the UK?",
+      "repeat": 1,
+      "market": "the UK",
+      "answer": "In the UK, leading link building agencies include FatJoe and Siege Media for reliable blogger outreach and content-led PR links. Top directories like Clutch and GoodFirms list vetted firms.",
+      "urls": [
+        "https://fatjoe.com",
+        "https://siegemedia.com",
+        "https://clutch.co/uk/seo-firms",
+        "https://goodfirms.co/seo-agencies/uk"
+      ],
+      "error": ""
+    },
+    {
+      "prompt_index": 1,
+      "prompt": "Top rated link building agencies in the UK \u2014 who do people recommend?",
+      "repeat": 1,
+      "market": "the UK",
+      "answer": "FatJoe and Page One Power are frequently cited for enterprise link acquisition in Britain. Look for proven case studies on Search Engine Land.",
+      "urls": [
+        "https://fatjoe.com",
+        "https://pageonepower.com",
+        "https://searchengineland.com/link-building-guide"
+      ],
+      "error": ""
+    },
+    {
+      "prompt_index": 2,
+      "prompt": "How do I choose between link building agencies in the UK?",
+      "repeat": 1,
+      "market": "the UK",
+      "answer": "When choosing an agency, evaluate transparency, link metrics, and pricing. Reviews on Trustpilot and Clutch provide good benchmarks.",
+      "urls": [
+        "https://clutch.co",
+        "https://trustpilot.com",
+        "https://fatjoe.com"
+      ],
+      "error": ""
+    }
+  ]
+}

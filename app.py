@@ -4,12 +4,14 @@ Finds which websites Google Gemini (with Google Search Grounding) cites when ans
 high-intent buyer and research queries, then turns those domains into a prioritised
 link-building & digital PR outreach target list.
 
-Key Engines:
-- Rate-Limited Gemini Client (gemini_client.py) with sequential pacing & 20s/40s/60s backoff retries
-- Deep On-Page Analysis (page_analysis.py) for competitor gaps, contacts, dates, and pitch classification
-- Brand Position & Sentiment Analysis (brand_analysis.py) for AI answer ranking hierarchy and sentiment scoring
-- Personalized Outreach Pitch Generator (pitch_generator.py) tailored to pitch types with CSV export
-- Gemini Token Usage Tracker & Rate-Limit Quota Counter
+Key Features & Modules:
+- Campaign Management: Slugified campaign IDs, grouped campaign run history in sidebar
+- Run Comparison & Trend Analysis: Brand SoV over time, domain churn, and won-link attribution
+- Multi-Market Mode: Cross-market queries, domain x market citation heatmaps, geo-specific link targets
+- Rate-Limited Gemini Client (gemini_client.py): Sequential pacing & 20s/40s/60s backoff retries
+- Deep On-Page Analysis (page_analysis.py): Competitor gaps, contacts, dates, and pitch classification
+- Brand Position & Sentiment (brand_analysis.py): Recommendation hierarchy and sentiment scoring
+- Personalized Outreach Pitch Generator (pitch_generator.py): Tailored pitch drafting with CSV export
 
 Run:  streamlit run app.py
 """
@@ -53,6 +55,15 @@ from brand_analysis import (
 from pitch_generator import (
     generate_batch_pitches,
     pitches_to_dataframe
+)
+from campaign_analytics import (
+    get_campaign_id,
+    scan_all_campaign_runs,
+    compare_two_runs,
+    compute_multi_run_sov_trend_series,
+    analyze_multi_market_run,
+    parse_won_links_file,
+    root_domain_clean
 )
 
 
@@ -184,23 +195,7 @@ def get_rate_limit_metrics():
 # ----------------------------------------------------------------------------
 def root_domain(url_or_domain: str) -> str:
     """Extract canonical root domain, correctly handling multi-part ccTLDs (.co.uk, .com.au, etc.)."""
-    s = (url_or_domain or "").strip().lower()
-    if not s:
-        return ""
-    if "://" not in s:
-        s = "https://" + s
-    try:
-        host = urlparse(s).netloc.split(":")[0]
-    except Exception:
-        host = s.split("/")[0].split(":")[0]
-        
-    if host.startswith("www."):
-        host = host[4:]
-        
-    parts = host.split(".")
-    if len(parts) >= 3 and parts[-2] in SECOND_LEVEL_TLDS and len(parts[-1]) <= 3:
-        return ".".join(parts[-3:])
-    return ".".join(parts[-2:]) if len(parts) >= 2 else host
+    return root_domain_clean(url_or_domain)
 
 
 def clean_url(url: str) -> str:
@@ -420,9 +415,9 @@ def ask_gemini_grounded(
         )
         return answer_text, urls, token_stats
 
-    # 2. AI Web Citation Mode (Fallback when Search tool is blocked or returns empty)
+    # 2. AI Web Citation Mode (Fallback)
     if status_callback:
-        status_callback("Search tool unavailable. Extracting AI Web Citations & authority references...")
+        status_callback("Extracting AI Web Citations & authority references...")
 
     citation_instruction = (
         f"{prompt}\n\n"
@@ -476,10 +471,11 @@ def ask_gemini_grounded(
 
 
 # ----------------------------------------------------------------------------
-# Campaign Execution
+# Campaign Execution (Supports Single & Multi-Market)
 # ----------------------------------------------------------------------------
-def run_grounded_campaign(
+def run_grounded_campaign_multi_market(
     prompts: list[str],
+    markets: list[str],
     repeats: int,
     api_key: str,
     model: str,
@@ -487,58 +483,69 @@ def run_grounded_campaign(
     progress_bar,
     status_text
 ) -> list[dict]:
-    """Execute sequential prompt queries with configurable pacing and rate-limit handling."""
-    total_jobs = len(prompts) * repeats
+    """Execute queries across one or multiple geographic markets."""
+    total_jobs = len(prompts) * len(markets) * repeats
     records = []
     job_idx = 0
 
-    for p_idx, prompt in enumerate(prompts):
-        for rep in range(1, repeats + 1):
-            job_idx += 1
-            status_desc = f"🔍 Querying [{job_idx}/{total_jobs}] Prompt {p_idx + 1}/{len(prompts)} (Run {rep}/{repeats}): \"{prompt[:45]}...\""
-            status_text.text(status_desc)
-            progress_bar.progress((job_idx - 1) / total_jobs)
+    base_market = markets[0] if markets else "the UK"
 
-            try:
-                answer_text, urls, token_stats = ask_gemini_grounded(
-                    prompt=prompt,
-                    api_key=api_key,
-                    model=model,
-                    delay_sec=delay_sec,
-                    max_retries=3,
-                    status_callback=lambda msg: status_text.text(f"[{job_idx}/{total_jobs}] {msg}")
-                )
-                records.append({
-                    "prompt_index": p_idx,
-                    "prompt": prompt,
-                    "repeat": rep,
-                    "answer": answer_text,
-                    "urls": [clean_url(u) for u in urls if u],
-                    "prompt_tokens": token_stats.get("prompt_tokens", 0),
-                    "candidates_tokens": token_stats.get("candidates_tokens", 0),
-                    "total_tokens": token_stats.get("total_tokens", 0),
-                    "latency_sec": token_stats.get("latency_sec", 0.0),
-                    "mode": token_stats.get("mode", "AI Citation"),
-                    "error": ""
-                })
-            except Exception as ex:
-                records.append({
-                    "prompt_index": p_idx,
-                    "prompt": prompt,
-                    "repeat": rep,
-                    "answer": "",
-                    "urls": [],
-                    "prompt_tokens": 0,
-                    "candidates_tokens": 0,
-                    "total_tokens": 0,
-                    "latency_sec": 0.0,
-                    "mode": "Error",
-                    "error": str(ex)[:400]
-                })
+    for mkt in markets:
+        for p_idx, base_prompt in enumerate(prompts):
+            # Adapt prompt for current market if multi-market
+            if len(markets) > 1 and base_market in base_prompt:
+                prompt = base_prompt.replace(base_market, mkt)
+            else:
+                prompt = base_prompt
 
-            progress_bar.progress(job_idx / total_jobs)
+            for rep in range(1, repeats + 1):
+                job_idx += 1
+                status_desc = f"🔍 Querying [{job_idx}/{total_jobs}] [{mkt}] Prompt {p_idx + 1}/{len(prompts)} (Run {rep}/{repeats}): \"{prompt[:40]}...\""
+                status_text.text(status_desc)
+                progress_bar.progress((job_idx - 1) / total_jobs)
 
-    status_text.text(f"✅ Completed all {total_jobs} queries successfully!")
+                try:
+                    answer_text, urls, token_stats = ask_gemini_grounded(
+                        prompt=prompt,
+                        api_key=api_key,
+                        model=model,
+                        delay_sec=delay_sec,
+                        max_retries=3,
+                        status_callback=lambda msg: status_text.text(f"[{job_idx}/{total_jobs}] [{mkt}] {msg}")
+                    )
+                    records.append({
+                        "prompt_index": p_idx,
+                        "prompt": prompt,
+                        "market": mkt,
+                        "repeat": rep,
+                        "answer": answer_text,
+                        "urls": [clean_url(u) for u in urls if u],
+                        "prompt_tokens": token_stats.get("prompt_tokens", 0),
+                        "candidates_tokens": token_stats.get("candidates_tokens", 0),
+                        "total_tokens": token_stats.get("total_tokens", 0),
+                        "latency_sec": token_stats.get("latency_sec", 0.0),
+                        "mode": token_stats.get("mode", "AI Citation"),
+                        "error": ""
+                    })
+                except Exception as ex:
+                    records.append({
+                        "prompt_index": p_idx,
+                        "prompt": prompt,
+                        "market": mkt,
+                        "repeat": rep,
+                        "answer": "",
+                        "urls": [],
+                        "prompt_tokens": 0,
+                        "candidates_tokens": 0,
+                        "total_tokens": 0,
+                        "latency_sec": 0.0,
+                        "mode": "Error",
+                        "error": str(ex)[:400]
+                    })
+
+                progress_bar.progress(job_idx / total_jobs)
+
+    status_text.text(f"✅ Completed all {total_jobs} queries across {len(markets)} markets successfully!")
     return records
 
 
@@ -578,6 +585,7 @@ def analyse(
                 "url": u,
                 "prompt": r["prompt"],
                 "prompt_index": r["prompt_index"],
+                "market": r.get("market", "Global"),
                 "repeat": r["repeat"],
                 "competitor_only_answer": competitor_only_answer
             })
@@ -791,23 +799,22 @@ def main():
             border: 1px solid rgba(245, 158, 11, 0.25);
             margin: 12px 0px 18px 0px;
         }
+        .trend-banner {
+            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            color: #F8FAFC;
+            border-radius: 12px;
+            padding: 18px 22px;
+            border-left: 6px solid #38BDF8;
+            margin-bottom: 20px;
+        }
         .stTabs [data-baseweb="tab-list"] {
-            gap: 8px;
+            gap: 6px;
         }
         .stTabs [data-baseweb="tab"] {
             border-radius: 8px 8px 0px 0px;
-            padding: 9px 16px;
+            padding: 8px 14px;
             font-weight: 600;
-        }
-        .pitch-box {
-            background: #F8FAFC;
-            border: 1px solid #E2E8F0;
-            border-radius: 8px;
-            padding: 14px;
-            margin-top: 8px;
-            font-family: monospace;
-            font-size: 0.9rem;
-            white-space: pre-wrap;
+            font-size: 0.92rem;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -815,12 +822,12 @@ def main():
     # Header
     st.markdown('<div class="main-header">🎯 AI Citation Link Prospector</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="sub-header">Reverse-engineer Google Gemini citations, analyse brand rank hierarchy, identify competitor gaps, and generate outreach-ready pitches.</div>',
+        '<div class="sub-header">Reverse-engineer Google Gemini citations, track campaign trends & won links, analyze multi-market heatmaps, and generate outreach pitches.</div>',
         unsafe_allow_html=True
     )
 
     # ------------------------------------------------------------------------
-    # Sidebar: Configuration, API Keys, Tokens & Saved Runs
+    # Sidebar: Campaign History, Config, API Keys, Tokens & Saved Runs
     # ------------------------------------------------------------------------
     with st.sidebar:
         st.header("⚙️ Gemini Engine Settings")
@@ -833,7 +840,6 @@ def main():
             help="Free key from Google AI Studio (https://aistudio.google.com/app/apikey)"
         )
         
-        # Model Selection with smart options
         model_options = [
             "gemini-3.1-flash-lite (Fast & Reliable)",
             "gemini-3.8-flash (Recommended)",
@@ -883,7 +889,7 @@ def main():
         )
 
         # --------------------------------------------------------------------
-        # Extension Feature: Gemini Token & Limit Counter Widget
+        # Token & Limit Counter Widget
         # --------------------------------------------------------------------
         st.divider()
         st.subheader("⚡ Token & Quota Counter")
@@ -927,55 +933,71 @@ def main():
             reset_token_tracker()
             st.rerun()
 
+        # --------------------------------------------------------------------
+        # 1. Campaign History Selector (Grouped by Campaign ID)
+        # --------------------------------------------------------------------
         st.divider()
-        st.subheader("📂 Saved Runs & Demos")
+        st.subheader("📂 Campaign History")
 
-        # Load from disk
-        saved_files = get_available_runs()
-        if saved_files:
-            file_options = ["-- Select a saved run --"] + saved_files
-            selected_file = st.selectbox(
-                "Load past run from disk",
-                options=file_options,
-                format_func=lambda x: os.path.basename(x) if x != "-- Select a saved run --" else x
+        campaign_groups = scan_all_campaign_runs(RUNS_DIR)
+        
+        if campaign_groups:
+            camp_options = ["-- Select a campaign --"] + list(campaign_groups.keys())
+            chosen_camp = st.selectbox(
+                "Campaign History",
+                options=camp_options,
+                format_func=lambda cid: f"📁 {cid} ({len(campaign_groups[cid])} runs)" if cid != "-- Select a campaign --" else cid
             )
-            if selected_file != "-- Select a saved run --":
-                if st.button("📥 Load Selected Run", use_container_width=True):
-                    try:
-                        with open(selected_file, "r", encoding="utf-8") as f:
-                            st.session_state["run"] = json.load(f)
-                        st.session_state["run_source_file"] = selected_file
-                        
-                        # Load matching page analysis cache
-                        cache_path = get_page_cache_path(st.session_state["run"], selected_file)
-                        cached_pages_df = load_cached_pages(cache_path)
-                        if not cached_pages_df.empty:
-                            st.session_state["pages_df"] = cached_pages_df
-                        else:
-                            st.session_state.pop("pages_df", None)
 
-                        # Load matching brand position cache
-                        brand_cache_path = get_brand_cache_path(st.session_state["run"], selected_file)
-                        cached_brands = load_cached_brands(brand_cache_path)
-                        if cached_brands:
-                            st.session_state["brand_results"] = cached_brands
-                        else:
-                            st.session_state.pop("brand_results", None)
+            if chosen_camp != "-- Select a campaign --":
+                camp_runs = campaign_groups[chosen_camp]
+                run_choices = []
+                for idx, cr in enumerate(camp_runs):
+                    is_latest = (idx == len(camp_runs) - 1)
+                    date_label = str(cr.get("created", ""))[:16].replace("T", " ")
+                    label = f"Run #{idx+1} — {date_label} {'(Latest 🌟)' if is_latest else ''}"
+                    run_choices.append((label, cr))
 
-                        st.session_state.pop("outreach_pitches", None)
-                        st.success(f"Loaded {os.path.basename(selected_file)}")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Error loading run: {e}")
+                selected_run_label = st.selectbox(
+                    "Select Run in Campaign",
+                    options=[rc[0] for rc in run_choices],
+                    index=len(run_choices) - 1
+                )
+                chosen_run_dict = next(rc[1] for rc in run_choices if rc[0] == selected_run_label)
 
-        # Upload custom JSON run
-        uploaded_run = st.file_uploader("Upload Run (.json)", type=["json"])
+                if st.button("📥 Load Selected Campaign Run", use_container_width=True):
+                    st.session_state["run"] = chosen_run_dict["data"]
+                    st.session_state["run_source_file"] = chosen_run_dict["filepath"]
+                    st.session_state["current_campaign_id"] = chosen_camp
+                    
+                    # Load matching page analysis cache
+                    cache_path = get_page_cache_path(st.session_state["run"], chosen_run_dict["filepath"])
+                    cached_pages_df = load_cached_pages(cache_path)
+                    if not cached_pages_df.empty:
+                        st.session_state["pages_df"] = cached_pages_df
+                    else:
+                        st.session_state.pop("pages_df", None)
+
+                    # Load matching brand position cache
+                    brand_cache_path = get_brand_cache_path(st.session_state["run"], chosen_run_dict["filepath"])
+                    cached_brands = load_cached_brands(brand_cache_path)
+                    if cached_brands:
+                        st.session_state["brand_results"] = cached_brands
+                    else:
+                        st.session_state.pop("brand_results", None)
+
+                    st.session_state.pop("outreach_pitches", None)
+                    st.success(f"Loaded campaign run: {os.path.basename(chosen_run_dict['filepath'])}")
+                    st.rerun()
+
+        # Custom upload
+        uploaded_run = st.file_uploader("Upload Custom Run (.json)", type=["json"])
         if uploaded_run:
             try:
                 st.session_state["run"] = json.load(uploaded_run)
                 st.session_state["run_source_file"] = uploaded_run.name
+                st.session_state["current_campaign_id"] = st.session_state["run"].get("campaign_id", "custom-upload")
                 
-                # Check for cached pages
                 cache_path = get_page_cache_path(st.session_state["run"], uploaded_run.name)
                 cached_pages_df = load_cached_pages(cache_path)
                 if not cached_pages_df.empty:
@@ -983,7 +1005,6 @@ def main():
                 else:
                     st.session_state.pop("pages_df", None)
 
-                # Check for cached brands
                 brand_cache_path = get_brand_cache_path(st.session_state["run"], uploaded_run.name)
                 cached_brands = load_cached_brands(brand_cache_path)
                 if cached_brands:
@@ -997,7 +1018,7 @@ def main():
                 st.error(f"Invalid JSON file: {e}")
 
     # ------------------------------------------------------------------------
-    # Campaign Inputs
+    # Campaign Inputs (Supports Multi-Market Mode)
     # ------------------------------------------------------------------------
     st.subheader("1. Campaign Profile")
     col1, col2 = st.columns(2)
@@ -1006,7 +1027,11 @@ def main():
         client_name = st.text_input("Client Brand Name", value="Digital Web Solutions")
         client_domain = st.text_input("Client Domain", value="digitalwebsolutions.com")
         service = st.text_input("Service / Niche (Plural)", value="link building agencies")
-        location = st.text_input("Market / Location", value="the UK")
+        location_input = st.text_input(
+            "Markets / Locations (e.g. 'the UK' or 'the UK, the US, Australia' for Multi-Market)",
+            value="the UK"
+        )
+        markets_list = [m.strip() for m in location_input.split(",") if m.strip()] or ["the UK"]
 
     with col2:
         comp_text = st.text_area(
@@ -1039,13 +1064,13 @@ def main():
     pcol1, pcol2 = st.columns([1, 1])
 
     with pcol1:
-        num_prompts = st.slider("Number of Prompts", min_value=5, max_value=30, value=10)
+        num_prompts = st.slider("Number of Prompts per Market", min_value=3, max_value=25, value=5)
     with pcol2:
         repeats = st.slider(
             "Repeats per Prompt (Consistency Test)",
             min_value=1,
             max_value=3,
-            value=2,
+            value=1,
             help="Running queries multiple times uncovers true citation consistency %."
         )
 
@@ -1057,7 +1082,7 @@ def main():
             with st.spinner("Asking Gemini to generate high-intent buyer questions..."):
                 generated = generate_prompts_gemini(
                     service=service,
-                    location=location,
+                    location=markets_list[0],
                     n=num_prompts,
                     api_key=api_key,
                     model=model_name,
@@ -1068,14 +1093,18 @@ def main():
     # Prompts textarea
     default_prompts = st.session_state.get(
         "prompts_text",
-        "\n".join([t.format(s=service, loc=location) for t in TEMPLATES[:num_prompts]])
+        "\n".join([t.format(s=service, loc=markets_list[0]) for t in TEMPLATES[:num_prompts]])
     )
     prompts_input = st.text_area(
         "Prompts (one per line — editable)",
         value=default_prompts,
-        height=180
+        height=160
     )
     prompts_list = [p.strip() for p in prompts_input.splitlines() if p.strip()]
+
+    # Multi-market badge
+    if len(markets_list) > 1:
+        st.info(f"🌍 **Multi-Market Mode Active:** Will run `{len(prompts_list)}` prompts across **{len(markets_list)} markets** ({', '.join(markets_list)}) for a total of **{len(prompts_list) * len(markets_list) * repeats}** queries.")
 
     # ------------------------------------------------------------------------
     # Execution Button
@@ -1096,8 +1125,9 @@ def main():
         status_text = st.empty()
 
         competitors_list = parse_competitors(comp_text)
-        records = run_grounded_campaign(
+        records = run_grounded_campaign_multi_market(
             prompts=prompts_list,
+            markets=markets_list,
             repeats=repeats,
             api_key=api_key,
             model=model_name,
@@ -1110,11 +1140,15 @@ def main():
         run_prompt_tokens = sum(r.get("prompt_tokens", 0) for r in records)
         run_cand_tokens = sum(r.get("candidates_tokens", 0) for r in records)
 
+        campaign_id = get_campaign_id(client_name, service, ", ".join(markets_list))
+
         run_payload = {
+            "campaign_id": campaign_id,
             "created": datetime.datetime.now().isoformat(timespec="seconds"),
             "client": {"name": client_name, "domain": client_domain},
             "service": service,
-            "location": location,
+            "location": location_input,
+            "markets": markets_list,
             "competitors": competitors_list,
             "prompts": prompts_list,
             "repeats": repeats,
@@ -1128,10 +1162,11 @@ def main():
         saved_path = save_run(run_payload)
         st.session_state["run"] = run_payload
         st.session_state["run_source_file"] = saved_path
+        st.session_state["current_campaign_id"] = campaign_id
         st.session_state.pop("pages_df", None)
         st.session_state.pop("brand_results", None)
         st.session_state.pop("outreach_pitches", None)
-        st.success(f"🎉 Run complete! Saved results to `{saved_path}` (Tokens Used: {run_total_tokens:,})")
+        st.success(f"🎉 Run complete! Saved results to `{saved_path}` for campaign `{campaign_id}`")
 
     # ------------------------------------------------------------------------
     # Analysis & Results Dashboard
@@ -1148,6 +1183,15 @@ def main():
     client_dict = current_run.get("client", {})
     comp_list = current_run.get("competitors", [])
     rep_count = current_run.get("repeats", 1)
+    run_markets = current_run.get("markets", [current_run.get("location", "the UK")])
+    if isinstance(run_markets, str):
+        run_markets = [m.strip() for m in run_markets.split(",") if m.strip()]
+
+    campaign_id = current_run.get("campaign_id") or get_campaign_id(
+        client_dict.get("name", ""),
+        current_run.get("service", ""),
+        ", ".join(run_markets)
+    )
 
     table, sov_df = analyse(records, client_dict, comp_list, inventory, repeats=rep_count)
     errors = [r for r in records if r.get("error")]
@@ -1185,7 +1229,7 @@ def main():
         table = merge_page_analysis_into_domains(table, pages_df)
 
     st.divider()
-    st.subheader(f"📊 Results — {current_run.get('service', 'Niche')} in {current_run.get('location', 'Market')}")
+    st.subheader(f"📊 Campaign: `{campaign_id}` — {current_run.get('service', 'Niche')} ({', '.join(run_markets)})")
 
     # Top 5 Metrics Row (including Client Avg Position)
     m1, m2, m3, m4, m5 = st.columns(5)
@@ -1303,35 +1347,18 @@ def main():
 
     if table.empty:
         st.warning("No citations were returned by Gemini for these queries.")
-        demo_col1, demo_col2 = st.columns([1, 2])
-        with demo_col1:
-            if st.button("📥 Load Sample Demo Run (UK Link Building)", use_container_width=True, type="secondary"):
-                try:
-                    with open("runs/sample_link_building_uk.json", "r", encoding="utf-8") as f:
-                        st.session_state["run"] = json.load(f)
-                    st.session_state["run_source_file"] = "runs/sample_link_building_uk.json"
-                    sample_cache = "runs/pages_sample_link_building_uk.json"
-                    cached_p = load_cached_pages(sample_cache)
-                    if not cached_p.empty:
-                        st.session_state["pages_df"] = cached_p
-                    sample_brand_cache = "runs/brands_sample_link_building_uk.json"
-                    cached_b = load_cached_brands(sample_brand_cache)
-                    if cached_b:
-                        st.session_state["brand_results"] = cached_b
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Could not load demo: {e}")
         return
 
     # ------------------------------------------------------------------------
-    # Detailed Result Tabs (7 Tabs)
+    # All Detailed Result Tabs (8 Tabs)
     # ------------------------------------------------------------------------
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
         "🎯 Link Targets",
         "⚔️ Competitor Gaps",
         "👑 Brand Position",
+        "📈 Trend",
+        "🌍 Markets",
         "📢 Share of Voice",
-        "📊 Action Mix",
         "📝 Raw Answers & Citations",
         "⚡ Token & Quota Monitor"
     ])
@@ -1495,7 +1522,6 @@ def main():
                 st.markdown(f"Found **{len(gap_pages)} high-intent competitor gap pages** ready for outreach pitching:")
                 gap_pages["competitors_list"] = gap_pages["competitors_present"].apply(lambda lst: ", ".join(lst) if isinstance(lst, list) else str(lst))
                 
-                # Checkbox selection for gap pages
                 gap_editor_df = gap_pages.copy()
                 gap_editor_df.insert(0, "Select", False)
 
@@ -1559,7 +1585,7 @@ def main():
                 )
 
     # ------------------------------------------------------------------------
-    # Tab 3: Brand Position & Sentiment (New Phase Feature)
+    # Tab 3: Brand Position & Sentiment
     # ------------------------------------------------------------------------
     with tab3:
         st.markdown("### 👑 AI Brand Position & Sentiment Analysis")
@@ -1571,7 +1597,6 @@ def main():
         if not brand_results or brand_summary_df.empty:
             st.info("💡 Click the **'🧠 Analyze Brand Position & Sentiment'** button above to evaluate brand ranking hierarchy and sentiment across all Gemini answers.")
         else:
-            # Summary Table
             st.markdown("#### 🏆 Brand Visibility & Recommendation Hierarchy")
             st.dataframe(
                 brand_summary_df,
@@ -1591,11 +1616,9 @@ def main():
                 }
             )
 
-            # Visual charts
             bcol1, bcol2 = st.columns(2)
             with bcol1:
                 st.markdown("#### 📉 Average Recommendation Rank *(Lower = Better)*")
-                # Filter mentioned brands for chart
                 chart_pos_df = brand_summary_df[brand_summary_df["avg_position"] < 90.0]
                 if not chart_pos_df.empty:
                     st.bar_chart(
@@ -1612,7 +1635,6 @@ def main():
                     use_container_width=True
                 )
 
-            # Per-Answer Deep-Dive Inspector
             with st.expander("🔍 Inspect Per-Answer Brand Position & Reason Breakdown"):
                 st.markdown("Detailed breakdown of brand positions extracted for each prompt:")
                 answer_rows = []
@@ -1647,9 +1669,224 @@ def main():
             )
 
     # ------------------------------------------------------------------------
-    # Tab 4: Share of Voice
+    # Tab 4: Trend & Run Comparison (New Feature)
     # ------------------------------------------------------------------------
     with tab4:
+        st.markdown("### 📈 Campaign Trend & Run Comparison")
+        st.caption("Compare citation dynamics across multiple runs in this campaign, monitor Brand SoV growth, detect domain churn, and verify Won Links now cited in AI answers.")
+
+        campaign_groups = scan_all_campaign_runs(RUNS_DIR)
+        curr_campaign_runs = campaign_groups.get(campaign_id, [])
+
+        if len(curr_campaign_runs) < 2:
+            st.info(f"💡 This campaign (`{campaign_id}`) currently has **{len(curr_campaign_runs)} run**. Run another iteration or select a campaign with multiple runs from the sidebar to view historical comparison trends.")
+            
+            # Offer demo trend loader
+            demo_tcol1, demo_tcol2 = st.columns([1, 2])
+            with demo_tcol1:
+                if st.button("📥 Load Sample Trend Campaign (2 Runs)", use_container_width=True, type="secondary"):
+                    with open("runs/sample_campaign_trend_2.json", "r", encoding="utf-8") as f:
+                        st.session_state["run"] = json.load(f)
+                    st.session_state["run_source_file"] = "runs/sample_campaign_trend_2.json"
+                    st.session_state["current_campaign_id"] = "digital-web-solutions-link-building-agencies-the-uk"
+                    cached_p = load_cached_pages("runs/pages_sample_campaign_trend_2.json")
+                    if not cached_p.empty:
+                        st.session_state["pages_df"] = cached_p
+                    cached_b = load_cached_brands("runs/brands_sample_campaign_trend_2.json")
+                    if cached_b:
+                        st.session_state["brand_results"] = cached_b
+                    st.rerun()
+
+        # Run Comparison Selector
+        all_available_runs = scan_all_campaign_runs(RUNS_DIR)
+        active_camp_runs = all_available_runs.get(campaign_id, curr_campaign_runs)
+
+        if len(active_camp_runs) >= 2:
+            tcol1, tcol2 = st.columns(2)
+            with tcol1:
+                earlier_options = [f"Run #{i+1} — {str(r['created'])[:16].replace('T', ' ')}" for i, r in enumerate(active_camp_runs[:-1])]
+                selected_earlier_label = st.selectbox("Baseline Run (Earlier)", options=earlier_options, index=0)
+                earlier_idx = earlier_options.index(selected_earlier_label)
+                earlier_run_dict = active_camp_runs[earlier_idx]["data"]
+
+            with tcol2:
+                latest_options = [f"Run #{i+1} — {str(r['created'])[:16].replace('T', ' ')}" for i, r in enumerate(active_camp_runs)]
+                selected_latest_label = st.selectbox("Current Run (Latest)", options=latest_options, index=len(latest_options)-1)
+                latest_idx = latest_options.index(selected_latest_label)
+                latest_run_dict = active_camp_runs[latest_idx]["data"]
+
+            # Won Links CSV Upload / Demo
+            st.markdown("##### 🔗 'Won Links' Verification (Upload Built Links CSV):")
+            wcol1, wcol2 = st.columns([2, 1])
+            with wcol1:
+                won_file = st.file_uploader("Upload Built Links CSV (column 'url')", type=["csv"], key="won_links_file_upload")
+            with wcol2:
+                load_sample_won = st.button("📥 Load Sample Built Links CSV (5 URLs)", use_container_width=True)
+
+            won_urls = []
+            if load_sample_won:
+                try:
+                    with open("runs/sample_won_links.csv", "r", encoding="utf-8") as f:
+                        won_urls = parse_won_links_file(f)
+                    st.session_state["won_urls_list"] = won_urls
+                    st.info(f"Loaded **{len(won_urls)}** sample built links for verification.")
+                except Exception:
+                    pass
+            elif won_file:
+                won_urls = parse_won_links_file(won_file)
+                st.session_state["won_urls_list"] = won_urls
+            else:
+                won_urls = st.session_state.get("won_urls_list", [])
+
+            # Run comparison analysis
+            comp_results = compare_two_runs(earlier_run_dict, latest_run_dict, won_links_urls=won_urls)
+
+            # Top Summary Sentence Banner
+            st.markdown(f"""
+            <div class="trend-banner">
+                <h4 style="margin-top:0px; margin-bottom:6px; color:#38BDF8;">📊 Campaign Trend Summary</h4>
+                <p style="font-size:1.05rem; margin-bottom:0px; line-height:1.5;">
+                    {comp_results['summary_sentence']}
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Visual Share of Voice Trend Chart across all runs
+            st.markdown("#### 📈 Brand Share of Voice (%) Over Time")
+            sov_trend_series = compute_multi_run_sov_trend_series(active_camp_runs)
+            if not sov_trend_series.empty:
+                st.line_chart(sov_trend_series, use_container_width=True)
+
+            # Domain Churn: New vs Lost vs Retained
+            st.markdown("#### 🔄 Cited Domain Movement (Churn Analysis)")
+            ch1, ch2, ch3 = st.columns(3)
+            with ch1:
+                st.metric("🆕 New Domains Cited", len(comp_results["new_domains"]), help="Cited in current run but not in baseline run")
+            with ch2:
+                st.metric("🔻 Dropped Domains", len(comp_results["lost_domains"]), help="Cited in baseline run but dropped in current run")
+            with ch3:
+                st.metric("🔄 Stable / Retained Domains", len(comp_results["stable_domains"]), help="Consistently cited across both runs")
+
+            with st.expander("📋 View Detailed Domain Churn Breakdown"):
+                dcol1, dcol2 = st.columns(2)
+                with dcol1:
+                    st.markdown("**🆕 New Domains Cited in Latest Run:**")
+                    if comp_results["new_domains"]:
+                        st.dataframe(pd.DataFrame({"New Domain": comp_results["new_domains"]}), use_container_width=True, hide_index=True)
+                    else:
+                        st.caption("No new domains cited.")
+                with dcol2:
+                    st.markdown("**🔻 Dropped Domains from Earlier Run:**")
+                    if comp_results["lost_domains"]:
+                        st.dataframe(pd.DataFrame({"Dropped Domain": comp_results["lost_domains"]}), use_container_width=True, hide_index=True)
+                    else:
+                        st.caption("No dropped domains.")
+
+            # Won Links Attribution Table
+            if not comp_results["won_links_analysis"].empty:
+                st.markdown("#### 🎯 Won Links Attribution in AI Grounding Citations")
+                st.caption("Verifies which URLs/domains where your team built links are now actively cited by Google Gemini answers.")
+                st.dataframe(
+                    comp_results["won_links_analysis"],
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "domain": st.column_config.TextColumn("Built Link Domain", width="medium"),
+                        "won_url": st.column_config.LinkColumn("Built Link URL", width="large"),
+                        "cited_in_latest": st.column_config.CheckboxColumn("Cited in Latest?", default=False),
+                        "latest_citations": st.column_config.NumberColumn("Citations"),
+                        "status": st.column_config.TextColumn("Attribution Status", width="medium")
+                    }
+                )
+
+    # ------------------------------------------------------------------------
+    # Tab 5: Multi-Market Mode (New Feature)
+    # ------------------------------------------------------------------------
+    with tab5:
+        st.markdown("### 🌍 Multi-Market Citation Intelligence")
+        st.caption("Compare how Google Gemini's AI grounding citations and recommendations vary across different geographic markets (UK, US, Australia, etc.).")
+
+        multi_market_results = analyze_multi_market_run(records, client_dict, comp_list)
+        all_markets_found = multi_market_results["all_markets"]
+
+        if len(all_markets_found) <= 1:
+            st.info("💡 Multi-Market mode requires running across 2 or more markets. Enter multiple markets (e.g. `the UK, the US, Australia`) in the Campaign Profile above to view cross-market matrices.")
+            demo_mcol1, demo_mcol2 = st.columns([1, 2])
+            with demo_mcol1:
+                if st.button("📥 Load Sample Multi-Market Run (UK, US, AU)", use_container_width=True, type="secondary"):
+                    with open("runs/sample_multi_market_run.json", "r", encoding="utf-8") as f:
+                        st.session_state["run"] = json.load(f)
+                    st.session_state["run_source_file"] = "runs/sample_multi_market_run.json"
+                    st.session_state["current_campaign_id"] = "digital-web-solutions-link-building-agencies-uk-us-au"
+                    cached_p = load_cached_pages("runs/pages_sample_multi_market_run.json")
+                    if not cached_p.empty:
+                        st.session_state["pages_df"] = cached_p
+                    cached_b = load_cached_brands("runs/brands_sample_multi_market_run.json")
+                    if cached_b:
+                        st.session_state["brand_results"] = cached_b
+                    st.rerun()
+        else:
+            # 1. Domain x Market Citation Heatmap Matrix
+            st.markdown("#### 🗺️ Domain × Market Citation Matrix")
+            st.caption("Total times each domain was cited by Gemini across each geographic market:")
+            
+            heatmap_df = multi_market_results["heatmap_df"]
+            if not heatmap_df.empty:
+                st.dataframe(
+                    heatmap_df,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "domain": st.column_config.TextColumn("Domain", width="medium"),
+                        "Total Citations": st.column_config.NumberColumn("Total Citations"),
+                        "Markets Cited In": st.column_config.NumberColumn("Markets Cited In")
+                    }
+                )
+
+                matrix_csv = heatmap_df.to_csv(index=False).encode("utf-8")
+                st.download_button(
+                    label="📥 Download Market Matrix CSV",
+                    data=matrix_csv,
+                    file_name=f"market_citation_matrix_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv"
+                )
+
+            # 2. Brand Share of Voice per Market
+            st.markdown("#### 📢 Brand Share of Voice (%) Across Markets")
+            m_sov_df = multi_market_results["market_sov_df"]
+            if not m_sov_df.empty:
+                st.dataframe(m_sov_df, use_container_width=True, hide_index=True)
+                
+                chart_m_sov = m_sov_df.set_index("Brand")
+                st.bar_chart(chart_m_sov, use_container_width=True)
+
+            # 3. Geo-Specific vs Global Authority Domains
+            st.divider()
+            st.markdown("#### 🎯 Geo-Specific Targets vs Global Authority Domains")
+            
+            geo_col1, geo_col2 = st.columns(2)
+            with geo_col1:
+                st.markdown("##### 📍 Geo-Specific Targets (Cited in ONLY 1 Market)")
+                st.caption("Ideal for local market outreach and targeted regional link acquisition:")
+                single_df = multi_market_results["single_market_df"]
+                if not single_df.empty:
+                    st.dataframe(single_df, use_container_width=True, hide_index=True)
+                else:
+                    st.caption("No single-market domains found.")
+
+            with geo_col2:
+                st.markdown("##### 🌐 Global Multi-Market Authority Domains")
+                st.caption("Dominant international publications cited across ALL tested markets:")
+                global_df = multi_market_results["global_domains_df"]
+                if not global_df.empty:
+                    st.dataframe(global_df, use_container_width=True, hide_index=True)
+                else:
+                    st.caption("No multi-market global authorities found.")
+
+    # ------------------------------------------------------------------------
+    # Tab 6: Share of Voice
+    # ------------------------------------------------------------------------
+    with tab6:
         st.markdown("### Brand Share of Voice Comparison")
         st.caption("Percentage of valid Gemini answers that directly mention each brand.")
         
@@ -1673,28 +1910,15 @@ def main():
             st.info("No brand names provided to calculate Share of Voice.")
 
     # ------------------------------------------------------------------------
-    # Tab 5: Action Mix
+    # Tab 7: Raw Answers & Citations
     # ------------------------------------------------------------------------
-    with tab5:
-        st.markdown("### Citation Action Distribution")
-        st.caption("Breakdown of cited websites across outreach types, UGC platforms, directories, and competitors.")
-        
-        action_counts = table.groupby("action")["citations"].sum().reset_index()
-        st.dataframe(action_counts, use_container_width=True, hide_index=True)
-        st.bar_chart(
-            data=action_counts.set_index("action")["citations"],
-            use_container_width=True
-        )
-
-    # ------------------------------------------------------------------------
-    # Tab 6: Raw Answers & Citations
-    # ------------------------------------------------------------------------
-    with tab6:
+    with tab7:
         st.markdown("### Full Gemini Answers & Grounding Citations")
         for i, r in enumerate(records):
             if r.get("error"):
                 continue
-            with st.expander(f"Prompt {r['prompt_index'] + 1} (Run {r['repeat']}): {r['prompt']}"):
+            mkt_tag = f"[{r.get('market', 'Global')}] " if r.get('market') else ""
+            with st.expander(f"{mkt_tag}Prompt {r['prompt_index'] + 1} (Run {r['repeat']}): {r['prompt']}"):
                 st.markdown("**AI Response Text:**")
                 st.markdown(r.get("answer", "*No text returned*"))
                 
@@ -1707,9 +1931,9 @@ def main():
                     st.caption("No explicit source links extracted.")
 
     # ------------------------------------------------------------------------
-    # Tab 7: Token & Quota Monitor
+    # Tab 8: Token & Quota Monitor
     # ------------------------------------------------------------------------
-    with tab7:
+    with tab8:
         st.markdown("### ⚡ Gemini Token Consumption & Quota Monitor")
         st.caption("Detailed token usage breakdown, rate limit metrics, and free-tier quota analysis for this campaign.")
 
@@ -1766,6 +1990,7 @@ def main():
             
             token_rows.append({
                 "Prompt #": r.get("prompt_index", 0) + 1,
+                "Market": r.get("market", "Global"),
                 "Repeat": r.get("repeat", 1),
                 "Prompt Text": r.get("prompt", "")[:60] + ("..." if len(r.get("prompt", "")) > 60 else ""),
                 "Input Tokens": p_tok,

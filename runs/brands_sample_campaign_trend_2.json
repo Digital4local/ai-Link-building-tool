@@ -1,0 +1,95 @@
+[
+  {
+    "prompt_index": 0,
+    "repeat": 1,
+    "prompt": "What are the best link building agencies in the UK?",
+    "brands": [
+      {
+        "name": "Digital Web Solutions",
+        "position": 1,
+        "sentiment": "positive",
+        "reason": "Mentioned at position #1 in AI answer"
+      },
+      {
+        "name": "FatJoe",
+        "position": 2,
+        "sentiment": "positive",
+        "reason": "Mentioned at position #2 in AI answer"
+      },
+      {
+        "name": "Siege Media",
+        "position": 3,
+        "sentiment": "positive",
+        "reason": "Mentioned at position #3 in AI answer"
+      },
+      {
+        "name": "Page One Power",
+        "position": null,
+        "sentiment": "neutral",
+        "reason": "Not mentioned in response"
+      }
+    ]
+  },
+  {
+    "prompt_index": 1,
+    "repeat": 1,
+    "prompt": "Top rated link building agencies in the UK \u2014 who do people recommend?",
+    "brands": [
+      {
+        "name": "Digital Web Solutions",
+        "position": 1,
+        "sentiment": "positive",
+        "reason": "Mentioned at position #1 in AI answer"
+      },
+      {
+        "name": "FatJoe",
+        "position": 2,
+        "sentiment": "positive",
+        "reason": "Mentioned at position #2 in AI answer"
+      },
+      {
+        "name": "Siege Media",
+        "position": null,
+        "sentiment": "neutral",
+        "reason": "Not mentioned in response"
+      },
+      {
+        "name": "Page One Power",
+        "position": null,
+        "sentiment": "neutral",
+        "reason": "Not mentioned in response"
+      }
+    ]
+  },
+  {
+    "prompt_index": 2,
+    "repeat": 1,
+    "prompt": "How do I choose between link building agencies in the UK?",
+    "brands": [
+      {
+        "name": "Digital Web Solutions",
+        "position": 1,
+        "sentiment": "positive",
+        "reason": "Mentioned at position #1 in AI answer"
+      },
+      {
+        "name": "FatJoe",
+        "position": null,
+        "sentiment": "neutral",
+        "reason": "Not mentioned in response"
+      },
+      {
+        "name": "Siege Media",
+        "position": null,
+        "sentiment": "neutral",
+        "reason": "Not mentioned in response"
+      },
+      {
+        "name": "Page One Power",
+        "position": null,
+        "sentiment": "neutral",
+        "reason": "Not mentioned in response"
+      }
+    ]
+  }
+]

@@ -1,0 +1,85 @@
+{
+  "campaign_id": "digital-web-solutions-link-building-agencies-uk-us-au",
+  "created": "2026-09-26T12:00:00",
+  "client": {
+    "name": "Digital Web Solutions",
+    "domain": "digitalwebsolutions.com"
+  },
+  "service": "link building agencies",
+  "location": "the UK, the US, Australia",
+  "markets": [
+    "the UK",
+    "the US",
+    "Australia"
+  ],
+  "competitors": [
+    {
+      "name": "FatJoe",
+      "domain": "fatjoe.com"
+    },
+    {
+      "name": "Siege Media",
+      "domain": "siegemedia.com"
+    },
+    {
+      "name": "Page One Power",
+      "domain": "pageonepower.com"
+    }
+  ],
+  "prompts": [
+    "What are the best link building agencies in the UK?",
+    "What are the best link building agencies in the US?",
+    "What are the best link building agencies in Australia?"
+  ],
+  "repeats": 1,
+  "model": "gemini-3.1-flash-lite",
+  "total_tokens": 2840,
+  "records": [
+    {
+      "prompt_index": 0,
+      "prompt": "What are the best link building agencies in the UK?",
+      "repeat": 1,
+      "market": "the UK",
+      "answer": "In the UK, leading link building firms include Digital Web Solutions and FatJoe, with strong editorial placements reviewed on Clutch UK.",
+      "urls": [
+        "https://clutch.co/uk/seo-firms",
+        "https://fatjoe.com/uk",
+        "https://digitalwebsolutions.com",
+        "https://riseatseven.com",
+        "https://searchengineland.com"
+      ],
+      "error": ""
+    },
+    {
+      "prompt_index": 1,
+      "prompt": "What are the best link building agencies in the US?",
+      "repeat": 1,
+      "market": "the US",
+      "answer": "In the United States, Siege Media, Page One Power, and Digital Web Solutions are top choices for high-authority American editorial links.",
+      "urls": [
+        "https://clutch.co/us/seo-firms",
+        "https://siegemedia.com",
+        "https://pageonepower.com",
+        "https://digitalwebsolutions.com",
+        "https://searchengineland.com",
+        "https://hubspot.com"
+      ],
+      "error": ""
+    },
+    {
+      "prompt_index": 2,
+      "prompt": "What are the best link building agencies in Australia?",
+      "repeat": 1,
+      "market": "Australia",
+      "answer": "In Australia, top link building providers include Megantic, Prosperity Media, and international providers like Digital Web Solutions.",
+      "urls": [
+        "https://clutch.co/au/seo-firms",
+        "https://megantic.com.au",
+        "https://prosperitymedia.com.au",
+        "https://digitalwebsolutions.com",
+        "https://searchengineland.com"
+      ],
+      "error": ""
+    }
+  ]
+}

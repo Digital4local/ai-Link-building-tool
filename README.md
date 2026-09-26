@@ -8,6 +8,20 @@ It identifies the exact websites Gemini cites when answering high-intent buyer a
 
 ## 🌟 Key Features
 
+- **Campaign ID & Historical Run Grouping (`campaign_analytics.py`)**:
+  - Automatically tags each run with a slugified `campaign_id` (`client-service-market`).
+  - Sidebar **"Campaign History"** selector groups all runs by campaign for 1-click loading and historical comparison.
+- **Run Comparison & Trend Intelligence (New Tab: 📈 Trend)**:
+  - Compares baseline runs against latest runs with a concise narrative summary.
+  - **Brand Share of Voice Over Time**: Multi-run line chart tracking client & competitor SoV % across dates.
+  - **Domain Churn Tracking**: Automatic classification of 🆕 **New Domains Cited**, 🔻 **Lost Domains**, and 🔄 **Stable / Retained Domains**.
+  - **"Won Links Now Cited" Attribution**: Upload a CSV of built links (`url` column) to verify which acquired links/domains are now actively cited by Google Gemini's AI grounding answers.
+- **Multi-Market Mode (New Tab: 🌍 Markets)**:
+  - Enter multiple geographic markets (e.g., `the UK, the US, Australia`).
+  - Automatically runs queries across each target market with sequential rate-limiting safety.
+  - **Domain × Market Citation Heatmap**: Interactive matrix showing citation frequency across regions.
+  - **Brand SoV per Market**: Regional brand visibility breakdown.
+  - **Geo-Specific vs Global Link Targets**: Identifies local market targets vs global authority publications.
 - **Centralized Rate-Limited Gemini Client (`gemini_client.py`)**:
   - Unified `gemini_generate()` function routing all AI interactions (grounding, prompt generation, brand analysis, pitch generation).
   - Enforces sequential pacing delays (configurable, default 6.0s).
@@ -43,12 +57,13 @@ It identifies the exact websites Gemini cites when answering high-intent buyer a
   - Sequential requests with configurable pacing delay (default: 6.0 seconds).
   - Automatic exponential retry on HTTP 429 (`ResourceExhausted`), waiting 20s / 40s / 60s before failing safely.
   - Transparent error logging without application crashes.
-- **7 Dedicated Interactive Tabs**:
+- **8 Dedicated Interactive Tabs**:
   - 🎯 **Link Targets**: Prioritised domain outreach list with action & pitch type filters, checkbox pitch generation, contact info, and CSV download.
   - ⚔️ **Competitor Gaps**: Dedicated outreach table of exact URLs featuring competitors without your brand, checkbox selection, and direct CSV export.
   - 👑 **Brand Position**: Brand ranking hierarchy (#1, #2, #3), top 3 share %, sentiment distribution charts, and per-answer deep-dive.
+  - 📈 **Trend**: Multi-run comparisons, Share of Voice line chart over time, domain churn, and "Won links now cited" attribution.
+  - 🌍 **Markets**: Cross-market citation heatmaps, geo-specific link targets, and regional Brand SoV.
   - 📢 **Share of Voice**: Brand mention comparison and SoV % metrics.
-  - 📊 **Action Mix**: Visual distribution of target categories.
   - 📝 **Raw Answers & Citations**: Complete grounding queries, AI answers, and source citations.
   - ⚡ **Token & Quota Monitor**: Per-query token breakdown, live RPM/RPD meters, and cost estimation.
 - **Run, Page, & Brand Cache Persistence**:
