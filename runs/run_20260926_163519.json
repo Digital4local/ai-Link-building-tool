@@ -1,0 +1,252 @@
+{
+  "created": "2026-09-26T16:35:19",
+  "client": {
+    "name": "Digital Web Solutions",
+    "domain": "digitalwebsolutions.com"
+  },
+  "service": "link building agencies",
+  "location": "the UK",
+  "competitors": [
+    {
+      "name": "FatJoe",
+      "domain": "fatjoe.com"
+    },
+    {
+      "name": "Siege Media",
+      "domain": "siegemedia.com"
+    },
+    {
+      "name": "Page One Power",
+      "domain": "pageonepower.com"
+    }
+  ],
+  "prompts": [
+    "What are the best link building agencies in the UK?",
+    "Top rated link building agencies in the UK \u2014 who do people recommend most?",
+    "How do I choose between link building agencies in the UK?",
+    "Which link building agencies in the UK have the best verified reviews?",
+    "Who are the most trusted link building agencies in the UK right now?"
+  ],
+  "repeats": 2,
+  "model": "gemini-3.1-flash-lite",
+  "total_tokens": 10801,
+  "total_prompt_tokens": 1290,
+  "total_candidates_tokens": 9511,
+  "records": [
+    {
+      "prompt_index": 0,
+      "prompt": "What are the best link building agencies in the UK?",
+      "repeat": 1,
+      "answer": "Finding the \"best\" link-building agency in the UK depends heavily on your specific needs: whether you require high-authority digital PR, niche-specific outreach, or scalable white-label solutions. \n\nThe UK SEO market is highly competitive, and the following agencies are widely recognized for their transparency, quality of backlinks, and adherence to Google\u2019s Webmaster Guidelines.\n\n### Top-Tier Link Building Agencies in the UK\n\n#### 1. Search Intelligence\nSearch Intelligence is widely regarded as one of the best agencies for high-end Digital PR and link building. They focus on data-driven campaigns that earn links from top-tier national publications (e.g., *The Guardian*, *BBC*, *Forbes*). They are ideal for brands looking for high-authority, authoritative backlinks that move the needle on organic search rankings.\n*   **Website:** https://search-intelligence.co.uk\n\n#### 2. FATJOE\nIf you are looking for a scalable, productized approach to link building, FATJOE is the industry leader. They offer a range of services, including blogger outreach, niche edits, and content syndication. They are particularly popular among smaller agencies and businesses that need a transparent, easy-to-use dashboard to order backlinks at scale.\n*   **Website:** https://fatjoe.com\n\n#### 3. Blue Array\nBlue Array is one of the UK\u2019s largest pure-play SEO agencies. While they offer full-service SEO, their link-building strategies are deeply integrated into their technical and content consulting. They are highly regarded for their professional approach and deep expertise in the UK market.\n*   **Website:** https://www.bluearray.co.uk\n\n#### 4. Rise at Seven\nRise at Seven has disrupted the UK SEO scene by blending creative PR with technical SEO. They are best suited for large brands looking for \"link-worthy\" creative campaigns that generate massive coverage and social buzz, rather than traditional, transactional link-building.\n*   **Website:** https://riseatseven.com\n\n#### 5. Click Intelligence\nClick Intelligence offers a hybrid approach, providing both high-end outreach and scalable link-building packages. They have a strong reputation for white-label services and are often cited as a reliable partner for companies requiring consistent, high-quality link acquisition.\n*   **Website:** https://clickintelligence.co.uk\n\n---\n\n### How to Verify and Vet Agencies\nBefore hiring an agency, it is recommended that you perform due diligence using trusted third-party platforms to verify their reputation, client reviews, and case studies:\n\n*   **Clutch:** The industry standard for B2B service reviews. You can filter by \"SEO\" and \"United Kingdom\" to see verified client feedback.\n    *   **Website:** https://clutch.co/uk/seo-firms\n*   **Search Engine Land:** Use this publication to stay updated on what constitutes \"white hat\" link building and to read industry analysis on current trends.\n    *   **Website:** https://searchengineland.com\n*   **r/SEO (Reddit):** While anecdotal, this community is excellent for getting unbiased, \"in the trenches\" feedback on which agencies are currently performing well and which to avoid.\n    *   **Website:** https://reddit.com/r/SEO\n\n### Strategic Advice for Choosing a Partner\n1.  **Ask for Examples:** Always ask for live examples of links they have built for clients in your specific industry.\n2.  **Avoid \"Guaranteed\" Rankings:** Any agency that promises a specific number of links or a #1 ranking on Google is likely using low-quality or \"black hat\" tactics that could result in a manual action against your site.\n3.  **Focus on Relevance:** A high-authority link from a site irrelevant to your niche is often less valuable than a medium-authority link from a highly relevant, industry-specific blog.\n\n### Cited Sources & Target URLs\n*   **Search Intelligence:** https://search-intelligence.co.uk\n*   **FATJOE:** https://fatjoe.com\n*   **Blue Array:** https://www.bluearray.co.uk\n*   **Rise at Seven:** https://riseatseven.com\n*   **Click Intelligence:** https://clickintelligence.co.uk\n*   **Clutch (UK SEO Firms):** https://clutch.co/uk/seo-firms\n*   **Search Engine Land:** https://searchengineland.com\n*   **Reddit (r/SEO):** https://reddit.com/r/SEO",
+      "urls": [
+        "https://search-intelligence.co.uk",
+        "https://fatjoe.com",
+        "https://www.bluearray.co.uk",
+        "https://riseatseven.com",
+        "https://clickintelligence.co.uk",
+        "https://clutch.co/uk/seo-firms",
+        "https://searchengineland.com",
+        "https://reddit.com/r/SEO"
+      ],
+      "prompt_tokens": 127,
+      "candidates_tokens": 966,
+      "total_tokens": 1093,
+      "latency_sec": 6.12,
+      "mode": "AI Web Citation Engine",
+      "error": ""
+    },
+    {
+      "prompt_index": 0,
+      "prompt": "What are the best link building agencies in the UK?",
+      "repeat": 2,
+      "answer": "Finding a reputable link-building agency in the UK requires distinguishing between \"black hat\" services (which risk Google penalties) and high-quality, content-led outreach agencies.\n\nThe following agencies are widely recognized for their focus on \"white hat\" strategies, such as digital PR, data-led storytelling, and manual outreach.\n\n### Top-Tier UK Link Building Agencies\n\n#### 1. Digitaloft\nDigitaloft is one of the most awarded agencies in the UK, specializing in digital PR. They focus on creating high-quality, data-driven content that earns links from major publications like *The Guardian*, *Forbes*, and *BBC*.\n*   **Website:** https://digitaloft.co.uk\n\n#### 2. Search Intelligence\nSearch Intelligence is highly regarded for its creative link-building campaigns. They specialize in \"newsjacking\" and data-driven storytelling, which helps brands secure high-authority backlinks. They are frequently cited in industry publications for their innovative approaches to digital PR.\n*   **Website:** https://search-intelligence.co.uk\n\n#### 3. FatJoe\nFatJoe is one of the largest outsourced link-building providers in the UK. While they offer a more productized service model compared to bespoke agencies, they are a go-to for agencies and SMEs looking for scalable, transparent link-building packages.\n*   **Website:** https://fatjoe.com\n\n#### 4. Rise at Seven\nRise at Seven has disrupted the UK SEO market by blending technical SEO with high-impact creative PR. They are known for viral campaigns that earn links from top-tier news sites and mainstream media outlets.\n*   **Website:** https://riseatseven.com\n\n#### 5. Blue Array\nWhile Blue Array is a full-service SEO consultancy, they are widely recognized for their rigorous, ethical approach to off-page SEO and link building. They are often cited as one of the best SEO agencies in the UK by industry authorities like Clutch.\n*   **Website:** https://www.bluearray.co.uk\n\n---\n\n### How to Verify Agencies\nBefore hiring an agency, it is recommended that you perform due diligence using the following platforms to check verified client reviews and case studies:\n\n*   **Clutch:** The industry standard for B2B reviews. You can filter specifically by \"Link Building\" and \"United Kingdom.\"\n    *   **URL:** https://clutch.co/uk/seo-firms\n*   **Search Engine Land:** Use this publication to research current industry standards and avoid agencies that use spammy tactics.\n    *   **URL:** https://searchengineland.com\n*   **Reddit (r/SEO):** A community-driven forum where you can search for candid discussions about specific agency reputations and experiences.\n    *   **URL:** https://reddit.com/r/SEO\n\n---\n\n### Key Considerations for Link Building\nWhen engaging an agency, look for these \"green flags\":\n1.  **Digital PR Focus:** They prioritize placements on real, high-traffic editorial sites rather than private blog networks (PBNs).\n2.  **Transparency:** They provide clear reporting on the domain authority (DA) or domain rating (DR) of the sites they target.\n3.  **Content-Led:** They have a dedicated team for content creation, as high-quality links rarely exist without a \"hook\" or valuable asset.\n\n### Cited Sources & Target URLs\n\n*   **Digitaloft:** https://digitaloft.co.uk\n*   **Search Intelligence:** https://search-intelligence.co.uk\n*   **FatJoe:** https://fatjoe.com\n*   **Rise at Seven:** https://riseatseven.com\n*   **Blue Array:** https://www.bluearray.co.uk\n*   **Clutch (UK SEO Firms):** https://clutch.co/uk/seo-firms\n*   **Search Engine Land:** https://searchengineland.com\n*   **Reddit (r/SEO):** https://reddit.com/r/SEO",
+      "urls": [
+        "https://digitaloft.co.uk",
+        "https://search-intelligence.co.uk",
+        "https://fatjoe.com",
+        "https://riseatseven.com",
+        "https://www.bluearray.co.uk",
+        "https://clutch.co/uk/seo-firms",
+        "https://searchengineland.com",
+        "https://reddit.com/r/SEO"
+      ],
+      "prompt_tokens": 127,
+      "candidates_tokens": 855,
+      "total_tokens": 982,
+      "latency_sec": 5.33,
+      "mode": "AI Web Citation Engine",
+      "error": ""
+    },
+    {
+      "prompt_index": 1,
+      "prompt": "Top rated link building agencies in the UK \u2014 who do people recommend most?",
+      "repeat": 1,
+      "answer": "Finding a reputable link-building agency in the UK requires filtering out \"spammy\" providers who use PBNs (Private Blog Networks) in favor of agencies that focus on digital PR and editorial outreach.\n\nBased on industry reputation, client reviews, and transparency, here are the top-rated link-building agencies and resources in the UK.\n\n### 1. Top-Rated Link Building & Digital PR Agencies\nThese agencies are frequently recommended on industry forums for their focus on high-authority, manual outreach.\n\n*   **Rise at Seven:** Widely considered the market leader for creative-led digital PR. They specialize in large-scale campaigns that earn links from national news outlets.\n    *   *Best for:* High-authority brand building and viral campaigns.\n    *   *Website:* https://riseatseven.com\n*   **Search Intelligence:** Highly regarded by SEO professionals for their data-led digital PR approach. They are known for securing links from top-tier UK publications like the BBC, The Guardian, and The Independent.\n    *   *Best for:* Data-driven link building and technical PR.\n    *   *Website:* https://search-intelligence.co.uk\n*   **FatJoe:** One of the most well-known \"productized\" SEO services in the UK. They offer a transparent dashboard where you can order specific link-building packages.\n    *   *Best for:* Agencies and SMEs looking for scalable, predictable link volume.\n    *   *Website:* https://fatjoe.com\n*   **Blue Array:** While they provide full-service SEO, their link-building and digital PR arm is highly respected in the UK market for its adherence to Google\u2019s Webmaster Guidelines.\n    *   *Best for:* Mid-to-large enterprises needing a strategic partner.\n    *   *Website:* https://www.bluearray.co.uk\n\n### 2. Industry Directories & Vetting Platforms\nIf you are looking for more options, use these platforms to filter by \"Link Building\" or \"SEO\" and verify them against verified client testimonials.\n\n*   **Clutch:** The gold standard for B2B service reviews. You can filter by \"UK\" and \"SEO\" to see verified feedback, project budgets, and portfolio links.\n    *   *Website:* https://clutch.co/uk/seo-firms\n*   **The Drum Recommends:** A UK-based platform that ranks agencies based on verified client ratings. It is particularly useful for finding agencies with a strong reputation in the British market.\n    *   *Website:* https://www.recommendedagencies.com\n\n### 3. Community Recommendations & Due Diligence\nBefore hiring an agency, it is highly recommended to check current discussions within the SEO community to see which agencies are currently performing well and which are being criticized.\n\n*   **Reddit (r/SEO):** A great place to ask for \"non-biased\" experiences. Search specifically for \"UK link building agency\" within the subreddit to find recent threads.\n    *   *Website:* https://reddit.com/r/SEO\n*   **Search Engine Land:** Use this publication to stay updated on what constitutes \"white hat\" link building. They often publish investigative pieces on how to vet agencies to avoid link schemes.\n    *   *Website:* https://searchengineland.com\n\n---\n\n### Key Advice for Selection\nWhen evaluating these agencies, always ask for:\n1.  **Case Studies:** Specifically, ask for links from the last 3 months to ensure their outreach tactics are currently working.\n2.  **Reporting:** Ensure they provide a transparent list of the URLs they have secured for you.\n3.  **Strategy:** Avoid any agency that promises a specific number of \"DA\" (Domain Authority) links, as this is a vanity metric; prioritize \"Relevance\" and \"Traffic\" instead.\n\n---\n\n### ### Cited Sources & Target URLs\n*   **Rise at Seven:** https://riseatseven.com\n*   **Search Intelligence:** https://search-intelligence.co.uk\n*   **FatJoe:** https://fatjoe.com\n*   **Blue Array:** https://www.bluearray.co.uk\n*   **Clutch:** https://clutch.co/uk/seo-firms\n*   **The Drum Recommends:** https://www.recommendedagencies.com\n*   **Reddit (r/SEO):** https://reddit.com/r/SEO\n*   **Search Engine Land:** https://searchengineland.com",
+      "urls": [
+        "https://riseatseven.com",
+        "https://search-intelligence.co.uk",
+        "https://fatjoe.com",
+        "https://www.bluearray.co.uk",
+        "https://clutch.co/uk/seo-firms",
+        "https://www.recommendedagencies.com",
+        "https://reddit.com/r/SEO",
+        "https://searchengineland.com"
+      ],
+      "prompt_tokens": 131,
+      "candidates_tokens": 964,
+      "total_tokens": 1095,
+      "latency_sec": 7.48,
+      "mode": "AI Web Citation Engine",
+      "error": ""
+    },
+    {
+      "prompt_index": 1,
+      "prompt": "Top rated link building agencies in the UK \u2014 who do people recommend most?",
+      "repeat": 2,
+      "answer": "Finding a reputable link-building agency in the UK requires filtering through many providers. The industry is generally split between \"managed service\" agencies (which handle the strategy and outreach) and \"link marketplaces\" (which allow you to buy placements directly).\n\nBased on industry reputation, client reviews on third-party platforms, and authority in the SEO community, the following are the most frequently recommended link-building providers in the UK.\n\n### 1. Top-Rated Managed Link Building Agencies\nThese agencies are typically recommended for high-quality, editorial-style outreach where the focus is on content relevance and domain authority.\n\n*   **Search Intelligence:** Frequently cited in UK SEO circles for their \"digital PR\" approach. They focus on data-driven campaigns that earn links from top-tier national publications (e.g., BBC, The Guardian).\n    *   *Website:* https://search-intelligence.co.uk\n*   **Blue Array:** While a full-service SEO agency, they are widely considered the largest dedicated SEO agency in the UK. They are frequently recommended for enterprise-level link acquisition strategies.\n    *   *Website:* https://www.bluearray.co.uk\n*   **Page One Power:** A long-standing name in the international SEO space with a strong presence in the UK. They are known for manual, bespoke link-building campaigns rather than automated outreach.\n    *   *Website:* https://www.pageonepower.com\n\n### 2. Popular Link Marketplaces & Scalable Services\nIf you are looking for a more transactional approach\u2014where you select specific domains to place content on\u2014these platforms are the market leaders.\n\n*   **FATJOE:** One of the most well-known names in the industry. They offer a self-service dashboard where you can order guest posts, niche edits, and blogger outreach at scale. They are highly recommended for agencies looking to outsource fulfillment.\n    *   *Website:* https://fatjoe.com\n*   **Authority Builders:** Highly rated for their strict vetting process. They focus on \"quality over quantity,\" ensuring that the sites you buy links from have clean backlink profiles and real traffic.\n    *   *Website:* https://authority.builders\n\n### 3. Where to Find Independent Reviews & Vetting\nTo verify the current reputation of any agency, it is recommended to look at independent directories. These platforms aggregate client feedback, which helps avoid bias.\n\n*   **Clutch:** The industry standard for B2B service reviews. You can filter by \"SEO\" and \"UK\" to see verified client testimonials and project budget ranges.\n    *   *Website:* https://clutch.co/uk/seo-firms\n*   **G2:** Similar to Clutch, G2 provides software and service reviews. It is a useful secondary source to cross-reference an agency's reputation.\n    *   *Website:* https://www.g2.com\n\n### 4. Community Recommendations\nFor unfiltered opinions, SEO professionals often turn to niche communities. These platforms are useful for asking for recent experiences with specific vendors.\n\n*   **r/SEO (Reddit):** A massive community where users frequently discuss which agencies provide \"white hat\" results versus those that use \"spammy\" tactics. Searching for \"UK link building\" within this subreddit often yields candid feedback.\n    *   *Website:* https://reddit.com/r/SEO\n*   **Search Engine Land:** While they are a news publication, they frequently publish industry reports and \"Agency of the Year\" lists that serve as a high-level vetting tool for enterprise brands.\n    *   *Website:* https://searchengineland.com\n\n---\n\n### Advice on Vetting\nBefore hiring any agency, it is recommended to ask for:\n1.  **A sample list of domains:** Ensure they are relevant to your niche.\n2.  **Case studies:** Look for examples where they increased *organic traffic*, not just domain authority.\n3.  **Link audit:** Ask how they ensure the sites they use are not part of \"link farms\" or private blog networks (PBNs).\n\n---\n\n### ### Cited Sources & Target URLs\n*   **Search Intelligence:** https://search-intelligence.co.uk\n*   **Blue Array:** https://www.bluearray.co.uk\n*   **Page One Power:** https://www.pageonepower.com\n*   **FATJOE:** https://fatjoe.com\n*   **Authority Builders:** https://authority.builders\n*   **Clutch (UK SEO Firms):** https://clutch.co/uk/seo-firms\n*   **G2:** https://www.g2.com\n*   **r/SEO (Reddit):** https://reddit.com/r/SEO\n*   **Search Engine Land:** https://searchengineland.com",
+      "urls": [
+        "https://search-intelligence.co.uk",
+        "https://www.bluearray.co.uk",
+        "https://www.pageonepower.com",
+        "https://fatjoe.com",
+        "https://authority.builders",
+        "https://clutch.co/uk/seo-firms",
+        "https://www.g2.com",
+        "https://reddit.com/r/SEO",
+        "https://searchengineland.com"
+      ],
+      "prompt_tokens": 131,
+      "candidates_tokens": 1026,
+      "total_tokens": 1157,
+      "latency_sec": 6.31,
+      "mode": "AI Web Citation Engine",
+      "error": ""
+    },
+    {
+      "prompt_index": 2,
+      "prompt": "How do I choose between link building agencies in the UK?",
+      "repeat": 1,
+      "answer": "Choosing a link-building agency in the UK requires a balance between technical SEO knowledge, ethical outreach practices, and industry reputation. Because link building is a high-risk activity\u2014where poor-quality backlinks can lead to Google penalties\u2014you must prioritize transparency over \"guaranteed\" rankings.\n\nHere is a strategic framework to help you evaluate and choose the right partner.\n\n### 1. Define Your Strategy: Quality vs. Quantity\nBefore contacting agencies, identify your goals. Are you looking for high-authority editorial placements (PR-led link building) or niche-specific blogger outreach?\n*   **PR-led:** Focuses on digital PR, data studies, and journalist outreach to earn links from national publications (e.g., The Guardian, BBC).\n*   **Blogger Outreach:** Focuses on guest posting and niche edits on relevant industry websites.\n\n### 2. Vetting Process: What to Ask\nWhen interviewing agencies, demand transparency on their methodologies. Avoid any agency that promises specific \"DR\" (Domain Rating) numbers or \"guaranteed #1 rankings.\"\n*   **Ask for their \"Blacklist\":** Ask how they vet websites. A reputable agency will have a strict policy against PBNs (Private Blog Networks) and \"link farms.\"\n*   **Request Case Studies:** Ask for examples of links built in your specific niche. Check the traffic stats of those target sites using tools like Ahrefs or Semrush.\n*   **The \"Link Removal\" Policy:** Ask what happens if a link is removed or if a site they placed a link on is penalized by Google.\n\n### 3. Where to Find and Research Agencies\nTo build a shortlist, use industry-standard directories and community platforms to cross-reference agency claims.\n\n*   **Clutch:** The industry standard for B2B reviews. Filter by \"UK\" and \"SEO\" to see verified client feedback. (https://clutch.co/uk/seo-firms)\n*   **Search Engine Land:** Use this to stay updated on the latest Google algorithm updates (like SpamBrain) to ensure your agency\u2019s tactics are compliant. (https://searchengineland.com)\n*   **Reddit (r/SEO):** A great place to search for candid, unfiltered community feedback on specific agencies, though take individual posts with a grain of salt. (https://reddit.com/r/SEO)\n*   **Ahrefs Blog:** Use their educational resources to understand what a \"high-quality link\" looks like so you can audit the agency\u2019s work yourself. (https://ahrefs.com/blog)\n\n### 4. Common Agency Models in the UK\n*   **Outreach-Focused Platforms:** Companies like **FATJOE** operate on a productized service model, which is excellent for scale but often requires more manual vetting from your side. (https://fatjoe.com)\n*   **Boutique SEO Agencies:** These firms often provide a more tailored, consultative approach, integrating link building with content strategy and technical SEO.\n*   **Digital PR Agencies:** These firms focus on creative campaigns that earn links organically through news cycles rather than transactional link buying.\n\n### 5. Red Flags to Avoid\n*   **\"Guaranteed\" Results:** Google explicitly states that no one can guarantee a top ranking.\n*   **Bulk Packages:** \"100 links for \u00a3500\" is a sign of low-quality, automated, or spam-based link building that will likely harm your site.\n*   **Lack of Reporting:** If they cannot provide a clear, transparent link report showing exactly where the links are and the metrics of those sites (Domain Authority/Traffic), do not proceed.\n\n### Summary Checklist for Selection\n1.  **Transparency:** Do they reveal their outreach sites before payment?\n2.  **Relevance:** Are the sites they target relevant to your industry?\n3.  **Content Quality:** Do they use high-quality, human-written content for guest posts?\n4.  **Reporting:** Do they provide a dashboard or detailed report of the live links?\n\n---\n\n### Cited Sources & Target URLs\n\n*   **Clutch (SEO Agency Directory):** https://clutch.co/uk/seo-firms\n*   **Search Engine Land (Industry News/Guidelines):** https://searchengineland.com\n*   **Reddit (SEO Community):** https://reddit.com/r/SEO\n*   **FATJOE (Outreach/Link Building Service):** https://fatjoe.com\n*   **Ahrefs (Educational Resources/SEO Tools):** https://ahrefs.com/blog",
+      "urls": [
+        "https://clutch.co/uk/seo-firms",
+        "https://searchengineland.com",
+        "https://reddit.com/r/SEO",
+        "https://ahrefs.com/blog",
+        "https://fatjoe.com"
+      ],
+      "prompt_tokens": 128,
+      "candidates_tokens": 977,
+      "total_tokens": 1105,
+      "latency_sec": 7.5,
+      "mode": "AI Web Citation Engine",
+      "error": ""
+    },
+    {
+      "prompt_index": 2,
+      "prompt": "How do I choose between link building agencies in the UK?",
+      "repeat": 2,
+      "answer": "Choosing the right link-building agency in the UK requires a balance between technical vetting, ethical standards, and cultural fit. Because link building is often the most risky aspect of SEO, you must prioritize quality over quantity to avoid Google penalties.\n\nHere is a framework for evaluating UK link-building agencies.\n\n### 1. Define Your Strategy: Outreach vs. Content-Led\nBefore contacting agencies, distinguish between the two primary models:\n*   **Outreach-Based:** Agencies that contact existing blogs and news sites to place links. These are often faster but can result in \"spammy\" guest posts if not vetted.\n*   **Content-Led/Digital PR:** Agencies that create original research, data studies, or creative assets to earn high-authority links from major news outlets (e.g., The Guardian, BBC). This is more expensive but safer and more sustainable.\n\n### 2. The Vetting Checklist\nWhen interviewing UK agencies, demand transparency on the following:\n*   **The \"Blacklist\":** Ask for a list of sites they *would not* place a link on. If they don't have a strict quality policy, move on.\n*   **Reporting:** Ask to see a sample report. Does it show \"Domain Authority\" (a third-party metric) or actual traffic metrics? Trust agencies that focus on **organic traffic** rather than just \"DA.\"\n*   **Editorial Standards:** Ask if they have an in-house editorial team. Links placed on sites with zero human-readable content are essentially worthless.\n*   **UK-Specific Context:** Ensure the agency understands the UK media landscape. If you are targeting a UK audience, you need links from sites that resonate with British search intent.\n\n### 3. Where to Find and Evaluate Agencies\nUse these platforms to cross-reference agency reputations:\n\n*   **Clutch.co:** This is the gold standard for B2B reviews. Filter by \"SEO\" and \"United Kingdom.\" Look for agencies with verified client reviews that mention long-term success, not just short-term link volume.\n    *   *URL:* https://clutch.co/uk/seo-firms\n*   **Search Engine Land / Search Engine Journal:** Use these industry authorities to read about \"best practices\" in link building. If an agency's pitch contradicts the advice found on these sites (e.g., promising \"guaranteed #1 rankings\" or \"500 links for \u00a3200\"), they are likely using black-hat techniques.\n    *   *URL:* https://searchengineland.com\n    *   *URL:* https://www.searchenginejournal.com\n*   **Reddit (r/SEO):** Use this community to search for agency names. While you should take individual comments with a grain of salt, it is a great place to see if an agency has a reputation for \"spamming\" or poor communication.\n    *   *URL:* https://reddit.com/r/SEO\n*   **Ahrefs Blog:** Ahrefs provides some of the best educational content on how to audit a link-building agency\u2019s work. Use their guides to understand what a \"good\" link looks like.\n    *   *URL:* https://ahrefs.com/blog\n\n### 4. Red Flags to Avoid\nIf you hear any of the following, terminate the conversation:\n1.  **\"Guaranteed Rankings\":** No agency can guarantee a #1 spot on Google.\n2.  **\"Private Blog Networks (PBNs)\":** Agencies using PBNs are building a house of cards that will eventually be penalized by Google.\n3.  **\"Link Packages\":** Legitimate link building is bespoke. If they are selling \"50 links for X price,\" it is almost certainly automated spam.\n\n### 5. Recommended Approach\nStart by shortlisting 3\u20135 agencies from **Clutch**. Request a case study that is specific to your industry (e.g., E-commerce, SaaS, or Local UK Services). Ask them how they measure the \"value\" of a link\u2014if they only talk about Domain Authority (DA) or Domain Rating (DR), they are missing the bigger picture of topical relevance and referral traffic.\n\n---\n\n### Cited Sources & Target URLs\n*   **Clutch (SEO Agency Directory):** https://clutch.co/uk/seo-firms\n*   **Search Engine Land (Industry News/Guidelines):** https://searchengineland.com\n*   **Search Engine Journal (Industry News/Guidelines):** https://www.searchenginejournal.com\n*   **Reddit (SEO Community):** https://reddit.com/r/SEO\n*   **Ahrefs (SEO Education/Tools):** https://ahrefs.com/blog",
+      "urls": [
+        "https://clutch.co/uk/seo-firms",
+        "https://searchengineland.com",
+        "https://www.searchenginejournal.com",
+        "https://reddit.com/r/SEO",
+        "https://ahrefs.com/blog"
+      ],
+      "prompt_tokens": 128,
+      "candidates_tokens": 1014,
+      "total_tokens": 1142,
+      "latency_sec": 7.53,
+      "mode": "AI Web Citation Engine",
+      "error": ""
+    },
+    {
+      "prompt_index": 3,
+      "prompt": "Which link building agencies in the UK have the best verified reviews?",
+      "repeat": 1,
+      "answer": "Finding an agency with \"verified\" reviews requires looking at platforms that mandate client identity verification and project proof. In the UK SEO market, the most reliable third-party platforms for these reviews are **Clutch** and **G2**.\n\nBelow are the UK-based link building and SEO agencies that consistently hold top-tier ratings on these platforms, along with the criteria for how to verify their reputation.\n\n### 1. Top-Rated Agencies Based on Verified Reviews\n\n#### **Search Intelligence**\nSearch Intelligence is a UK-based agency that specializes in digital PR and high-authority link building. They are frequently cited in industry publications for their data-led campaigns.\n*   **Reputation:** They maintain a high volume of verified reviews on Clutch, with clients specifically praising their ability to secure links in Tier-1 publications (e.g., The Guardian, Forbes).\n*   **Verification:** Their reviews on Clutch include project details and verified client contact information.\n*   **Website:** https://search-intelligence.co.uk\n\n#### **FatJoe**\nWhile often classified as a link building \"service provider\" rather than a full-service agency, FatJoe is the most reviewed vendor in the industry.\n*   **Reputation:** They have thousands of reviews across Trustpilot and their own platform. They are a go-to for agencies looking to outsource volume-based link building.\n*   **Verification:** Their Trustpilot profile is heavily monitored and includes direct feedback from thousands of SEO professionals.\n*   **Website:** https://fatjoe.com\n\n#### **Genie Crawl**\nBased in London, Genie Crawl is highly rated on Clutch for small-to-medium enterprise (SME) SEO and link building services.\n*   **Reputation:** They are noted for transparency and communicative project management. Their Clutch profile shows consistent 5-star reviews from UK-based businesses.\n*   **Verification:** Clutch verified their team size, location, and client project completion.\n*   **Website:** https://www.geniecrawl.com\n\n#### **Breakline**\nBreakline focuses heavily on B2B SEO and technical link building. They have a strong reputation for high-quality, manual outreach rather than automated tactics.\n*   **Reputation:** They hold a perfect rating on Clutch, with reviewers highlighting their strategic approach to link acquisition rather than just \"buying\" links.\n*   **Verification:** Clutch reviews provide specific metrics regarding the impact of their link building on organic traffic.\n*   **Website:** https://breakline.co.uk\n\n---\n\n### 2. How to Verify Agency Reviews Yourself\nTo ensure you aren't looking at \"fake\" or incentivized reviews, use these platforms to perform your own due diligence:\n\n*   **Clutch:** This is the gold standard for B2B services. They conduct phone interviews with the agency\u2019s clients to verify the work was actually performed.\n    *   **URL:** https://clutch.co/uk/seo-firms\n*   **Trustpilot:** Use this for assessing the general customer service experience of an agency. Be wary of \"incentivized\" reviews (where users are paid to leave a review).\n    *   **URL:** https://www.trustpilot.com\n*   **r/SEO (Reddit):** While not \"verified\" in a corporate sense, this community is excellent for identifying agencies that have a poor reputation among practitioners. Search for specific agency names here to see if they are flagged for \"spammy\" link building practices.\n    *   **URL:** https://reddit.com/r/SEO\n\n---\n\n### 3. A Note on \"Verified\" Quality\nWhen selecting an agency, do not rely solely on the star rating. Look for these indicators within the reviews:\n1.  **Project Scope:** Does the review mention specific link building tactics (e.g., Digital PR, Guest Posting, Broken Link Building)? \n2.  **Longevity:** Does the review mention a long-term relationship? Link building takes time; short-term \"quick fix\" reviews are often red flags.\n3.  **Industry Alignment:** Ensure the agency has experience in your specific vertical (e.g., E-commerce vs. SaaS).\n\n### Cited Sources & Target URLs\n\n*   **Clutch (UK SEO Directory):** https://clutch.co/uk/seo-firms\n*   **Search Intelligence:** https://search-intelligence.co.uk\n*   **FatJoe:** https://fatjoe.com\n*   **Genie Crawl:** https://www.geniecrawl.com\n*   **Breakline:** https://breakline.co.uk\n*   **Trustpilot:** https://www.trustpilot.com\n*   **r/SEO (Reddit Community):** https://reddit.com/r/SEO",
+      "urls": [
+        "https://search-intelligence.co.uk",
+        "https://fatjoe.com",
+        "https://www.geniecrawl.com",
+        "https://breakline.co.uk",
+        "https://clutch.co/uk/seo-firms",
+        "https://www.trustpilot.com",
+        "https://reddit.com/r/SEO"
+      ],
+      "prompt_tokens": 129,
+      "candidates_tokens": 1018,
+      "total_tokens": 1147,
+      "latency_sec": 5.42,
+      "mode": "AI Web Citation Engine",
+      "error": ""
+    },
+    {
+      "prompt_index": 3,
+      "prompt": "Which link building agencies in the UK have the best verified reviews?",
+      "repeat": 2,
+      "answer": "Finding a reputable link-building agency in the UK requires filtering through many providers, as the industry is plagued by low-quality \"spammy\" practices. To identify agencies with the best verified reviews, you should rely on platforms that enforce client verification (such as Clutch or G2) and industry-specific reputation.\n\nBelow are agencies that consistently rank highly on verified review platforms for their link-building and SEO performance in the UK.\n\n### 1. Search Intelligence\nSearch Intelligence is frequently cited in the UK SEO community for its focus on \"Digital PR,\" which is currently the most effective way to earn high-authority backlinks. They have a strong reputation for securing placements in Tier-1 publications (e.g., BBC, The Guardian, Forbes).\n*   **Review Platform:** They maintain a high rating on Clutch, with verified client testimonials detailing specific link-acquisition campaigns.\n*   **Website:** https://search-intelligence.co.uk\n\n### 2. FATJOE\nFATJOE is one of the largest link-building and content-marketing agencies in the UK. While they offer scalable, productized link-building services, they also have a massive volume of verified reviews on Trustpilot. They are ideal for agencies or brands looking for transparent pricing and consistent delivery.\n*   **Review Platform:** They have thousands of verified reviews on Trustpilot, providing a high degree of social proof regarding their delivery timelines.\n*   **Website:** https://fatjoe.com\n\n### 3. The SEO Works\nA multi-award-winning UK agency, The SEO Works handles end-to-end SEO, including significant link-building campaigns. They are highly active in the UK business community and have a robust presence on Clutch. They are best suited for enterprise-level clients who need a holistic approach rather than just transactional link purchasing.\n*   **Review Platform:** They have a strong track record of verified reviews on Clutch, specifically highlighting their communication and transparency.\n*   **Website:** https://www.seoworks.co.uk\n\n### 4. Click Intelligence\nClick Intelligence is a UK-based agency that focuses heavily on white-label SEO and link-building services. They are well-regarded by other agencies and businesses for their technical approach to link building, including blogger outreach and digital PR.\n*   **Review Platform:** They maintain verified profiles on Clutch and G2, where clients often comment on the quality of the domains they secure.\n*   **Website:** https://clickintelligence.co.uk\n\n### How to Verify Reviews Yourself\nBefore hiring any agency, it is recommended that you cross-reference their claims using the following methods:\n\n*   **Clutch.co:** This is the industry standard for verified B2B reviews. Agencies cannot simply post their own reviews; Clutch staff typically conduct phone interviews with the client to verify the project's legitimacy. (https://clutch.co/uk/seo-firms)\n*   **Trustpilot:** Useful for general sentiment and customer service feedback, though it is less specific to SEO performance than Clutch. (https://uk.trustpilot.com)\n*   **SEO Communities:** To see what industry experts say about these agencies, search specific agency names on Reddit\u2019s r/SEO or r/bigseo. These communities are often skeptical of \"link-building\" agencies and provide a candid perspective on who is actually \"white hat.\" (https://reddit.com/r/SEO)\n\n### A Note on Due Diligence\nWhen evaluating these agencies, always ask to see a \"live\" portfolio of links they have built for clients in your specific niche. High-quality link building should be relevant to your industry; avoid agencies that refuse to provide case studies or examples of their work.\n\n***\n\n### Cited Sources & Target URLs\n*   **Search Intelligence:** https://search-intelligence.co.uk\n*   **FATJOE:** https://fatjoe.com\n*   **The SEO Works:** https://www.seoworks.co.uk\n*   **Click Intelligence:** https://clickintelligence.co.uk\n*   **Clutch (UK SEO Firms):** https://clutch.co/uk/seo-firms\n*   **Trustpilot:** https://uk.trustpilot.com\n*   **Reddit (SEO Community):** https://reddit.com/r/SEO",
+      "urls": [
+        "https://search-intelligence.co.uk",
+        "https://fatjoe.com",
+        "https://www.seoworks.co.uk",
+        "https://clickintelligence.co.uk",
+        "https://clutch.co/uk/seo-firms",
+        "https://uk.trustpilot.com",
+        "https://reddit.com/r/SEO"
+      ],
+      "prompt_tokens": 129,
+      "candidates_tokens": 908,
+      "total_tokens": 1037,
+      "latency_sec": 5.44,
+      "mode": "AI Web Citation Engine",
+      "error": ""
+    },
+    {
+      "prompt_index": 4,
+      "prompt": "Who are the most trusted link building agencies in the UK right now?",
+      "repeat": 1,
+      "answer": "Identifying a \"trusted\" link-building agency requires looking beyond marketing claims and focusing on transparency, ethical outreach practices, and proven case studies. In the UK, the SEO industry is highly competitive, and the most reputable agencies generally avoid \"PBNs\" (Private Blog Networks) or mass-automated link spam.\n\nThe following agencies are widely recognized for their editorial-led, manual outreach approaches and their standing within the UK SEO community.\n\n### 1. Rise at Seven\nRise at Seven is arguably the most prominent UK-based agency for \"creative\" link building. They specialize in digital PR, where they create data-led stories or stunts to earn high-authority links from major news outlets (e.g., The Guardian, BBC, Reuters). They are highly trusted by enterprise-level brands.\n*   **Website:** https://riseatseven.com\n\n### 2. Blue Array\nWidely considered the UK\u2019s leading pure-play SEO agency, Blue Array is known for its technical rigor and transparent reporting. While they offer a full range of SEO services, their link-building strategies are strictly white-hat, focusing on building sustainable authority through content and PR.\n*   **Website:** https://www.bluearray.co.uk\n\n### 3. FATJOE\nFATJOE is the industry standard for scalable, outsourced link-building services. They operate as a vendor for many smaller agencies but also work directly with brands. They are highly transparent about their processes and have built a massive infrastructure for guest posting and blogger outreach.\n*   **Website:** https://fatjoe.com\n\n### 4. Search Intelligence\nSearch Intelligence is a boutique agency that focuses heavily on high-end Digital PR. They are frequently cited in industry publications like *Search Engine Land* for their ability to land links on top-tier global publications. Their approach is heavily data-driven and focused on news-jacking.\n*   **Website:** https://searchintelligence.co.uk\n\n### 5. Verve Search\nVerve Search is a veteran agency in the UK SEO scene. They are highly trusted for their \"Content Marketing\" approach to link building, which involves extensive research and creative campaigns that journalists actually want to cover. They are frequent speakers at major industry events like BrightonSEO.\n*   **Website:** https://vervesearch.com\n\n---\n\n### How to Verify Trustworthiness\nBefore hiring any agency, it is recommended that you perform your own due diligence using these independent platforms:\n\n*   **Clutch:** This is the primary directory for B2B service providers. You can filter by \"UK\" and \"SEO\" to see verified client reviews and project costs.\n    *   **URL:** https://clutch.co/uk/seo-firms\n*   **BrightonSEO:** This is the world's largest search marketing conference, held in the UK. Checking the speaker list or the \"BrightonSEO\" blog for articles written by agency staff is a great way to verify the agency\u2019s subject matter expertise.\n    *   **URL:** https://brightonseo.com\n*   **Search Engine Land / Search Engine Journal:** These are the primary industry news outlets. Agencies that contribute expert commentary or case studies here are generally held in higher regard by the SEO community.\n    *   **URL:** https://searchengineland.com\n    *   **URL:** https://searchenginejournal.com\n*   **Reddit (r/SEO):** While you must take anonymous advice with a grain of salt, searching for agency names on the r/SEO subreddit can sometimes reveal candid discussions about their reputation and service quality.\n    *   **URL:** https://reddit.com/r/SEO\n\n### ### Cited Sources & Target URLs\n*   **Rise at Seven:** https://riseatseven.com\n*   **Blue Array:** https://www.bluearray.co.uk\n*   **FATJOE:** https://fatjoe.com\n*   **Search Intelligence:** https://searchintelligence.co.uk\n*   **Verve Search:** https://vervesearch.com\n*   **Clutch (UK SEO Directory):** https://clutch.co/uk/seo-firms\n*   **BrightonSEO:** https://brightonseo.com\n*   **Search Engine Land:** https://searchengineland.com\n*   **Search Engine Journal:** https://searchenginejournal.com\n*   **Reddit SEO Community:** https://reddit.com/r/SEO",
+      "urls": [
+        "https://riseatseven.com",
+        "https://www.bluearray.co.uk",
+        "https://fatjoe.com",
+        "https://searchintelligence.co.uk",
+        "https://vervesearch.com",
+        "https://clutch.co/uk/seo-firms",
+        "https://brightonseo.com",
+        "https://searchengineland.com",
+        "https://searchenginejournal.com",
+        "https://reddit.com/r/SEO"
+      ],
+      "prompt_tokens": 130,
+      "candidates_tokens": 947,
+      "total_tokens": 1077,
+      "latency_sec": 5.78,
+      "mode": "AI Web Citation Engine",
+      "error": ""
+    },
+    {
+      "prompt_index": 4,
+      "prompt": "Who are the most trusted link building agencies in the UK right now?",
+      "repeat": 2,
+      "answer": "Identifying \"trusted\" link building agencies requires looking for firms that prioritize editorial quality, manual outreach, and transparency over \"black hat\" practices like PBNs (Private Blog Networks) or mass-automated link spam.\n\nIn the UK market, the following agencies have built strong reputations based on consistent performance, ethical standards, and industry recognition.\n\n### 1. Rise at Seven\nRise at Seven is arguably the most prominent UK agency for \"creative\" link building. They specialize in digital PR, which focuses on earning high-authority links through data-led storytelling and news-jacking. They are frequently cited by industry publications for their viral campaigns.\n*   **Website:** https://riseatseven.com\n\n### 2. Blue Array\nBlue Array is one of the UK\u2019s largest pure-play SEO agencies. They are highly regarded for their \"SEO-first\" approach to link building. They avoid short-term tactics and focus on long-term authority building, transparency, and reporting. They are a staple in the UK SEO community and often contribute to industry thought leadership.\n*   **Website:** https://www.bluearray.co.uk\n\n### 3. FATJOE\nFATJOE is a specialized vendor that operates on a scale unmatched by boutique agencies. While they offer a wide range of services, their \"Blogger Outreach\" and \"Guest Posting\" services are highly popular among UK agencies and in-house teams who need reliable, scalable link acquisition. They are widely discussed on platforms like Reddit for their transparent pricing models.\n*   **Website:** https://fatjoe.com\n\n### 4. Search Intelligence\nSearch Intelligence is a boutique agency that focuses heavily on high-end digital PR. They are known for getting clients featured in major UK publications (e.g., *The Guardian*, *The Independent*, *BBC*). Their focus is strictly on high-authority, top-tier media placements, which are considered the \"gold standard\" of link building.\n*   **Website:** https://search-intelligence.co.uk\n\n### 5. Authority Hacker (Resource/Community)\nWhile not a traditional agency, Authority Hacker is the industry standard for vetting and learning high-level link-building strategies. Their blog and podcast are essential resources for UK businesses to understand what \"trusted\" looks like before hiring an agency. They frequently analyze and rank link-building agencies based on rigorous testing.\n*   **Website:** https://authorityhacker.com\n\n---\n\n### How to Verify Trustworthiness\nBefore hiring any agency, it is recommended that you verify their status using independent third-party platforms that track client reviews and agency performance:\n\n*   **Clutch:** The primary directory for B2B service providers. You can filter by \"UK\" and \"SEO\" to see verified client reviews. (https://clutch.co/uk/seo-firms)\n*   **Search Engine Land:** A leading industry news publication that provides insights into ethical SEO practices. If an agency is mentioned here, it is usually because they are contributing to the industry. (https://searchengineland.com)\n*   **Reddit (r/SEO):** The community-led subreddit is where many SEO professionals discuss which agencies actually deliver results versus those that over-promise. (https://reddit.com/r/SEO)\n\n---\n\n### ### Cited Sources & Target URLs\n\n*   **Rise at Seven:** https://riseatseven.com\n*   **Blue Array:** https://www.bluearray.co.uk\n*   **FATJOE:** https://fatjoe.com\n*   **Search Intelligence:** https://search-intelligence.co.uk\n*   **Authority Hacker:** https://authorityhacker.com\n*   **Clutch (UK SEO Firms):** https://clutch.co/uk/seo-firms\n*   **Search Engine Land:** https://searchengineland.com\n*   **Reddit (r/SEO):** https://reddit.com/r/SEO",
+      "urls": [
+        "https://riseatseven.com",
+        "https://www.bluearray.co.uk",
+        "https://fatjoe.com",
+        "https://search-intelligence.co.uk",
+        "https://authorityhacker.com",
+        "https://clutch.co/uk/seo-firms",
+        "https://searchengineland.com",
+        "https://reddit.com/r/SEO"
+      ],
+      "prompt_tokens": 130,
+      "candidates_tokens": 836,
+      "total_tokens": 966,
+      "latency_sec": 5.07,
+      "mode": "AI Web Citation Engine",
+      "error": ""
+    }
+  ]
+}

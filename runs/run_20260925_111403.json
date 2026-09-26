@@ -1,0 +1,131 @@
+{
+  "created": "2026-09-25T11:14:03",
+  "client": {
+    "name": "Digital Web Solutions",
+    "domain": "https://www.digitalwebsolutions.com"
+  },
+  "service": "link building agencies",
+  "location": "USA",
+  "competitors": [
+    {
+      "name": "Linkbuilder.io",
+      "domain": ""
+    },
+    {
+      "name": "https://userp.io/",
+      "domain": ""
+    },
+    {
+      "name": "https://outreachz.com/",
+      "domain": ""
+    }
+  ],
+  "prompts": [
+    "What are the best link building agencies in USA?",
+    "Top rated link building agencies in USA \u2014 who do people recommend most?",
+    "How do I choose between link building agencies in USA?",
+    "Which link building agencies in USA have the best verified reviews?",
+    "Who are the most trusted link building agencies in USA right now?",
+    "Affordable but highly reliable link building agencies in USA?"
+  ],
+  "repeats": 2,
+  "model": "gemini-2.5-flash",
+  "records": [
+    {
+      "prompt_index": 0,
+      "prompt": "What are the best link building agencies in USA?",
+      "repeat": 1,
+      "answer": "",
+      "urls": [],
+      "error": "404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    },
+    {
+      "prompt_index": 0,
+      "prompt": "What are the best link building agencies in USA?",
+      "repeat": 2,
+      "answer": "",
+      "urls": [],
+      "error": "404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    },
+    {
+      "prompt_index": 1,
+      "prompt": "Top rated link building agencies in USA \u2014 who do people recommend most?",
+      "repeat": 1,
+      "answer": "",
+      "urls": [],
+      "error": "404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    },
+    {
+      "prompt_index": 1,
+      "prompt": "Top rated link building agencies in USA \u2014 who do people recommend most?",
+      "repeat": 2,
+      "answer": "",
+      "urls": [],
+      "error": "404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    },
+    {
+      "prompt_index": 2,
+      "prompt": "How do I choose between link building agencies in USA?",
+      "repeat": 1,
+      "answer": "",
+      "urls": [],
+      "error": "404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    },
+    {
+      "prompt_index": 2,
+      "prompt": "How do I choose between link building agencies in USA?",
+      "repeat": 2,
+      "answer": "",
+      "urls": [],
+      "error": "404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    },
+    {
+      "prompt_index": 3,
+      "prompt": "Which link building agencies in USA have the best verified reviews?",
+      "repeat": 1,
+      "answer": "",
+      "urls": [],
+      "error": "404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    },
+    {
+      "prompt_index": 3,
+      "prompt": "Which link building agencies in USA have the best verified reviews?",
+      "repeat": 2,
+      "answer": "",
+      "urls": [],
+      "error": "404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    },
+    {
+      "prompt_index": 4,
+      "prompt": "Who are the most trusted link building agencies in USA right now?",
+      "repeat": 1,
+      "answer": "",
+      "urls": [],
+      "error": "404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    },
+    {
+      "prompt_index": 4,
+      "prompt": "Who are the most trusted link building agencies in USA right now?",
+      "repeat": 2,
+      "answer": "",
+      "urls": [],
+      "error": "404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    },
+    {
+      "prompt_index": 5,
+      "prompt": "Affordable but highly reliable link building agencies in USA?",
+      "repeat": 1,
+      "answer": "",
+      "urls": [],
+      "error": "404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    },
+    {
+      "prompt_index": 5,
+      "prompt": "Affordable but highly reliable link building agencies in USA?",
+      "repeat": 2,
+      "answer": "",
+      "urls": [],
+      "error": "404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    }
+  ]
+}

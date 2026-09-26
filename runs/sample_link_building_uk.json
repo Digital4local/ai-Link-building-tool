@@ -1,0 +1,94 @@
+{
+  "created": "2026-09-25T10:30:00",
+  "client": {
+    "name": "Digital Web Solutions",
+    "domain": "digitalwebsolutions.com"
+  },
+  "service": "link building agencies",
+  "location": "the UK",
+  "competitors": [
+    {
+      "name": "FatJoe",
+      "domain": "fatjoe.com"
+    },
+    {
+      "name": "Siege Media",
+      "domain": "siegemedia.com"
+    },
+    {
+      "name": "Page One Power",
+      "domain": "pageonepower.com"
+    }
+  ],
+  "prompts": [
+    "What are the best link building agencies in the UK?",
+    "Top rated link building agencies in the UK — who do people recommend?",
+    "How do I choose between link building agencies in the UK?"
+  ],
+  "repeats": 1,
+  "model": "gemini-3.1-flash-lite",
+  "total_tokens": 1580,
+  "total_prompt_tokens": 340,
+  "total_candidates_tokens": 1240,
+  "records": [
+    {
+      "prompt_index": 0,
+      "prompt": "What are the best link building agencies in the UK?",
+      "repeat": 1,
+      "prompt_tokens": 115,
+      "candidates_tokens": 420,
+      "total_tokens": 535,
+      "latency_sec": 1.42,
+      "mode": "AI Web Citation Engine",
+      "answer": "When looking for top-tier link building agencies in the UK, several established firms stand out for their content-led outreach and digital PR capabilities:\n\n1. **FatJoe**: A well-known UK-based outsourcing partner offering blogger outreach, HARO/digital PR links, and scalable link acquisition.\n2. **Siege Media**: Renowned for premium content marketing and digital PR that earns high-authority editorial links from publications like Forbes and The Telegraph.\n3. **Click Intelligence**: A UK digital marketing agency specialising in bespoke link outreach and technical SEO.\n4. **Rise at Seven**: An award-winning creative digital PR agency known for viral campaigns that earn Tier 1 British press coverage.\n\nIndustry reviews on Clutch and GoodFirms consistently rate these providers highly for link velocity and white-hat compliance.",
+      "urls": [
+        "https://clutch.co/uk/seo-firms/link-building",
+        "https://fatjoe.com/link-building-uk/",
+        "https://siegemedia.com/link-building",
+        "https://riseatseven.com/services/digital-pr/",
+        "https://searchengineland.com/guide-link-building-agencies",
+        "https://reddit.com/r/SEO/comments/best_uk_link_building_services/"
+      ],
+      "error": ""
+    },
+    {
+      "prompt_index": 1,
+      "prompt": "Top rated link building agencies in the UK — who do people recommend?",
+      "repeat": 1,
+      "prompt_tokens": 118,
+      "candidates_tokens": 390,
+      "total_tokens": 508,
+      "latency_sec": 1.35,
+      "mode": "AI Web Citation Engine",
+      "answer": "According to community discussions and independent review directories, the most recommended UK link building providers include:\n\n- **FatJoe** (frequently praised on Reddit for affordability and turnaround time)\n- **Page One Power** (acknowledged for custom manual outreach and relationship building)\n- **Reboot Digital PR** (recognized in industry studies for search-first digital PR campaigns)\n- **Digital Web Solutions** (cited for international enterprise SEO and white-label agency partnerships)\n\nReview aggregator Trustpilot and directory Clutch show high client satisfaction scores across these agencies.",
+      "urls": [
+        "https://trustpilot.com/review/fatjoe.com",
+        "https://clutch.co/uk/seo-firms",
+        "https://searchengineland.com/best-seo-agencies-uk",
+        "https://digitalwebsolutions.com/services/link-building",
+        "https://reddit.com/r/BigSEO/comments/recommended_link_builders_uk/",
+        "https://goodfirms.co/seo-companies/uk"
+      ],
+      "error": ""
+    },
+    {
+      "prompt_index": 2,
+      "prompt": "How do I choose between link building agencies in the UK?",
+      "repeat": 1,
+      "prompt_tokens": 107,
+      "candidates_tokens": 430,
+      "total_tokens": 537,
+      "latency_sec": 1.48,
+      "mode": "AI Web Citation Engine",
+      "answer": "When evaluating link building agencies in the UK market, consider the following critical criteria:\n\n1. **Outreach Method**: Ensure they rely on genuine digital PR, expert commentary, or manual relationship building rather than private blog networks (PBNs).\n2. **Domain Quality Metrics**: Look beyond Domain Authority (DA) — verify organic traffic trends and topical relevance using tools like Ahrefs or Semrush.\n3. **Client Proof & Case Studies**: Check independent verification on Clutch, G2, or industry roundups on Search Engine Journal.\n4. **Pricing Transparency**: Compare fixed-price deliverables (like FatJoe) versus performance retainer models (like Siege Media).",
+      "urls": [
+        "https://searchenginejournal.com/how-to-choose-link-building-agency/",
+        "https://g2.com/categories/seo-services",
+        "https://ahrefs.com/blog/link-building-agency/",
+        "https://clutch.co/uk/seo-firms/link-building",
+        "https://quora.com/How-do-I-choose-the-best-link-building-agency"
+      ],
+      "error": ""
+    }
+  ]
+}

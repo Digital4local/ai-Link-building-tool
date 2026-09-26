@@ -1,0 +1,42 @@
+{
+  "created": "2026-09-25T11:31:34",
+  "client": {
+    "name": "Digital Web Solutions",
+    "domain": "digitalwebsolutions.com"
+  },
+  "service": "link building agencies",
+  "location": "the UK",
+  "competitors": [
+    {
+      "name": "https://outreachz.com/",
+      "domain": ""
+    },
+    {
+      "name": "https://linkbuilder.io/",
+      "domain": ""
+    }
+  ],
+  "prompts": [
+    "What are the best link building agencies in the UK?"
+  ],
+  "repeats": 2,
+  "model": "gemini-3.1-flash-lite",
+  "records": [
+    {
+      "prompt_index": 0,
+      "prompt": "What are the best link building agencies in the UK?",
+      "repeat": 1,
+      "answer": "",
+      "urls": [],
+      "error": "Gemini API Quota Exceeded (HTTP 429). Your Google AI Studio free tier quota has been reached for this key. Please check https://ai.dev/rate-limit or wait a few minutes."
+    },
+    {
+      "prompt_index": 0,
+      "prompt": "What are the best link building agencies in the UK?",
+      "repeat": 2,
+      "answer": "",
+      "urls": [],
+      "error": "Gemini API Quota Exceeded (HTTP 429). Your Google AI Studio free tier quota has been reached for this key. Please check https://ai.dev/rate-limit or wait a few minutes."
+    }
+  ]
+}
