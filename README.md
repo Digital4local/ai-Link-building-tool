@@ -8,21 +8,31 @@ It identifies the exact websites Gemini cites when answering high-intent buyer a
 
 ## 🌟 Key Features
 
-- **Gemini-First Search Grounding & Citation Fallback**:
-  - Direct REST API integration with Gemini models (`gemini-3.1-flash-lite`, `gemini-2.5-flash`, etc.) using Google Search tools (`google_search`).
-  - Seamless AI citation parsing fallback to guarantee zero failures on free-tier keys.
-- **Deep On-Page Analysis & Outreach Intelligence**:
+- **Centralized Rate-Limited Gemini Client (`gemini_client.py`)**:
+  - Unified `gemini_generate()` function routing all AI interactions (grounding, prompt generation, brand analysis, pitch generation).
+  - Enforces sequential pacing delays (configurable, default 6.0s).
+  - Automatic exponential backoff retry on HTTP 429 and 503 with 20s / 40s / 60s delays (max 3 retries).
+  - Native JSON mode (`generationConfig.responseMimeType = "application/json"`).
+  - Real-time session call counter tracking total Gemini calls.
+- **Brand Position & Sentiment Analysis (`brand_analysis.py`)**:
+  - Evaluates exact recommendation rank position (1st, 2nd, 3rd) in AI answers via Gemini JSON mode.
+  - Computes average position (lower is better rank), % of answers in top 3, and sentiment breakdown (Positive / Neutral / Negative).
+  - Dedicated **"👑 Brand Position"** tab with rank comparison bar charts and per-answer breakdown inspector.
+  - Adds top-level **"Client Avg Position"** metric alongside Share of Voice.
+  - Automatic caching to `runs/brands_<run_timestamp>.json`.
+- **Personalized Outreach Pitch Generator (`pitch_generator.py`)**:
+  - Interactive selection of up to 10 prospect targets in **🎯 Link Targets** or **⚔️ Competitor Gaps** via `st.data_editor` checkboxes.
+  - Automatically fetches 1,500-character page excerpts and writes tailored pitches (under 120 words, zero fluff, 1 clear ask matching pitch type).
+  - Generates subject lines, suggested anchor texts, and 3 guest post topic ideas (for Guest post pitch type).
+  - Interactive copy-friendly expanders and CSV export. Strictly manual review (never auto-sends).
+- **Deep On-Page Analysis & Outreach Intelligence (`page_analysis.py`)**:
   - Scrapes each AI-cited URL with 1-second domain pacing and Chrome user-agent headers.
   - Skips UGC domains (Reddit, YouTube, Quora, Wikipedia, LinkedIn, Medium, Facebook, X/Twitter, etc.).
   - Extracts **Page Title**, **H1**, and main content **Word Count**.
   - Checks if the page links to or mentions your client brand.
   - Detects **Competitors Present** and flags high-priority **Competitor Gaps** (where competitors are featured but your brand is omitted).
-  - Rule-based **Pitch Type Classification**:
-    - *"List inclusion"* (Top/Best lists)
-    - *"Directory listing"* (Clutch, G2, Trustpilot, etc.)
-    - *"Guest post"* (Detects Write-For-Us/Contribute links on page or homepage)
-    - *"Niche edit"*
-  - **Contact & Email Discovery**: Discovers `mailto:` emails from the page/homepage or contact page URLs.
+  - Rule-based **Pitch Type Classification**: *"List inclusion"*, *"Directory listing"*, *"Guest post"*, *"Niche edit"*.
+  - **Contact & Email Discovery**: Discovers `mailto:` emails and contact page URLs.
   - **Freshness Detection**: Extracts `last_updated` date from OpenGraph, JSON-LD schemas (`dateModified`/`datePublished`), or `<time>` tags.
   - **Outbound Link Profiling**: Counts external links and calculates `% Sponsored / Nofollow` share.
 - **Domain-Level Roll-Up & Enhanced Priority Scoring**:
@@ -31,19 +41,21 @@ It identifies the exact websites Gemini cites when answering high-intent buyer a
     $$\text{Priority Score} = \text{Citations} + (2 \times \text{Prompts}) + (2 \times \text{Competitor Wins}) + \frac{\text{Consistency \%}}{25} + (5 \times \text{Competitor Gap Pages})$$
 - **Free-Tier Rate Limiting Safety**:
   - Sequential requests with configurable pacing delay (default: 6.0 seconds).
-  - Automatic exponential retry on HTTP 429 (`ResourceExhausted`), waiting 20 seconds up to 3 times before failing safely.
+  - Automatic exponential retry on HTTP 429 (`ResourceExhausted`), waiting 20s / 40s / 60s before failing safely.
   - Transparent error logging without application crashes.
-- **Dedicated Interactive Tabs**:
-  - 🎯 **Link Targets**: Prioritised domain outreach list with action & pitch type filters, contact info, and CSV download.
-  - ⚔️ **Competitor Gaps**: Dedicated outreach table of exact URLs featuring competitors without your brand, with direct CSV export.
+- **7 Dedicated Interactive Tabs**:
+  - 🎯 **Link Targets**: Prioritised domain outreach list with action & pitch type filters, checkbox pitch generation, contact info, and CSV download.
+  - ⚔️ **Competitor Gaps**: Dedicated outreach table of exact URLs featuring competitors without your brand, checkbox selection, and direct CSV export.
+  - 👑 **Brand Position**: Brand ranking hierarchy (#1, #2, #3), top 3 share %, sentiment distribution charts, and per-answer deep-dive.
   - 📢 **Share of Voice**: Brand mention comparison and SoV % metrics.
   - 📊 **Action Mix**: Visual distribution of target categories.
   - 📝 **Raw Answers & Citations**: Complete grounding queries, AI answers, and source citations.
   - ⚡ **Token & Quota Monitor**: Per-query token breakdown, live RPM/RPD meters, and cost estimation.
-- **Run & Page Analysis Cache Persistence**:
+- **Run, Page, & Brand Cache Persistence**:
   - Every run is automatically saved to `runs/<timestamp>.json`.
-  - Page analysis is cached to `runs/pages_<run_timestamp>.json` so pages are never re-scraped unnecessarily.
-  - Offline demo viewer loads sample runs and pre-scraped page analysis instantly.
+  - Page analysis cached to `runs/pages_<run_timestamp>.json`.
+  - Brand position analysis cached to `runs/brands_<run_timestamp>.json`.
+  - Offline demo viewer loads sample runs and pre-scraped analysis instantly.
 
 ---
 
