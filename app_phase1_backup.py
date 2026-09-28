@@ -57,10 +57,7 @@ from brand_analysis import (
 )
 from pitch_generator import (
     generate_batch_pitches,
-    pitches_to_dataframe,
-    get_pitches_cache_path,
-    load_cached_pitches,
-    save_cached_pitches
+    pitches_to_dataframe
 )
 from campaign_analytics import (
     get_campaign_id,
@@ -1018,13 +1015,7 @@ def main():
                     else:
                         st.session_state.pop("content_brief", None)
 
-                    pitches_cache_path = get_pitches_cache_path(st.session_state["run"], chosen_run_dict["filepath"])
-                    cached_pitches = load_cached_pitches(pitches_cache_path)
-                    if cached_pitches:
-                        st.session_state["outreach_pitches"] = list(cached_pitches.values())
-                    else:
-                        st.session_state.pop("outreach_pitches", None)
-
+                    st.session_state.pop("outreach_pitches", None)
                     st.success(f"Loaded campaign run: {os.path.basename(chosen_run_dict['filepath'])}")
                     st.rerun()
 
@@ -1057,13 +1048,7 @@ def main():
                 else:
                     st.session_state.pop("content_brief", None)
 
-                pitches_cache_path = get_pitches_cache_path(st.session_state["run"], uploaded_run.name)
-                cached_pitches = load_cached_pitches(pitches_cache_path)
-                if cached_pitches:
-                    st.session_state["outreach_pitches"] = list(cached_pitches.values())
-                else:
-                    st.session_state.pop("outreach_pitches", None)
-
+                st.session_state.pop("outreach_pitches", None)
                 st.success("Uploaded run loaded successfully!")
             except Exception as e:
                 st.error(f"Invalid JSON file: {e}")
@@ -1281,12 +1266,6 @@ def main():
 
     content_brief_data = st.session_state.get("content_brief", {})
 
-    pitches_cache_path = get_pitches_cache_path(current_run, run_source)
-    if "outreach_pitches" not in st.session_state or not st.session_state["outreach_pitches"]:
-        cached_pitches = load_cached_pitches(pitches_cache_path)
-        if cached_pitches:
-            st.session_state["outreach_pitches"] = list(cached_pitches.values())
-
     if not pages_df.empty:
         table = merge_page_analysis_into_domains(table, pages_df)
 
@@ -1305,12 +1284,11 @@ def main():
         if not client_row.empty:
             client_sov = f"{client_row['share_of_voice_pct'].iloc[0]}%"
 
-    client_avg_pos = "Not listed"
+    client_avg_pos = "-"
     if not brand_summary_df.empty and client_dict.get("name"):
         c_brand_row = brand_summary_df[brand_summary_df["brand"].str.lower() == client_dict["name"].strip().lower()]
-        if not c_brand_row.empty:
-            pos_val = c_brand_row["avg_position_display"].iloc[0]
-            client_avg_pos = pos_val if pos_val != "-" else "Not listed"
+        if not c_brand_row.empty and c_brand_row["avg_position_display"].iloc[0] != "-":
+            client_avg_pos = c_brand_row["avg_position_display"].iloc[0]
 
     # Average Citation-Worthiness Score for top 20 pages
     avg_top20_score_str = "N/A"
@@ -1599,20 +1577,13 @@ def main():
                 selected_rows=selected_target_rows,
                 client_dict=client_dict,
                 service=current_run.get("service", service),
-                market=run_markets[0] if run_markets else "",
                 api_key=api_key,
                 model=model_name,
                 delay_sec=delay_sec,
                 progress_callback=lambda p, msg: (pitch_bar.progress(p), pitch_status.text(msg))
             )
-            
-            pitches_dict = {p.get("url", f"target_{i}"): p for i, p in enumerate(generated_pitches)}
-            existing_pitches = load_cached_pitches(pitches_cache_path)
-            existing_pitches.update(pitches_dict)
-            save_cached_pitches(existing_pitches, pitches_cache_path)
-            st.session_state["outreach_pitches"] = list(existing_pitches.values())
+            st.session_state["outreach_pitches"] = generated_pitches
             st.success(f"🎉 Successfully drafted {len(generated_pitches)} personalized outreach pitches!")
-            st.rerun()
 
         current_pitches = st.session_state.get("outreach_pitches", [])
         if current_pitches:
@@ -1622,28 +1593,27 @@ def main():
 
             for p_idx, pitch in enumerate(current_pitches):
                 domain_title = pitch.get("domain") or pitch.get("url", f"Target #{p_idx+1}")
-                pitch_type_str = pitch.get("pitch_type", "Outreach")
-                with st.expander(f"{domain_title} — {pitch_type_str}", expanded=(p_idx == 0)):
+                with st.expander(f"📧 Pitch for {domain_title} — [{pitch.get('pitch_type')}]", expanded=(p_idx == 0)):
                     st.markdown(f"**Target URL:** [{pitch.get('url')}]({pitch.get('url')})")
                     if pitch.get("contact"):
-                        st.markdown(f"**Contact:** `{pitch.get('contact')}`")
+                        st.markdown(f"**Discovered Contact:** `{pitch.get('contact')}`")
                     
-                    st.markdown(f"**Subject:** `{pitch.get('subject', '')}`")
-                    st.markdown("**Email:**")
-                    st.code(pitch.get("email", ""), language="text")
+                    st.markdown(f"**Subject Line:** `{pitch.get('subject')}`")
+                    st.markdown("**Outreach Email Body (Max 120 words):**")
+                    st.text_area(
+                        label=f"Email Content ({domain_title})",
+                        value=pitch.get("email", ""),
+                        height=140,
+                        key=f"pitch_text_{p_idx}"
+                    )
 
-                    if pitch.get("suggested_anchor"):
-                        st.markdown(f"**Suggested Anchor:** `{pitch.get('suggested_anchor')}`")
-                    if pitch.get("suggested_sentence"):
-                        st.markdown(f"**Suggested Sentence:** *\"{pitch.get('suggested_sentence')}\"*")
+                    st.markdown(f"**Suggested Anchor Text:** `{pitch.get('suggested_anchor', client_name)}`")
                     
-                    title_ideas = pitch.get("title_ideas") or pitch.get("suggested_topics") or []
-                    if title_ideas and isinstance(title_ideas, list):
-                        st.markdown("**Title Ideas:**")
-                        for t in title_ideas:
+                    topics = pitch.get("suggested_topics", [])
+                    if topics and isinstance(topics, list):
+                        st.markdown("**Suggested Guest Post Topics:**")
+                        for t in topics:
                             st.markdown(f"- 💡 {t}")
-
-            st.info("⚠️ Review every pitch before sending.")
 
             df_pitches = pitches_to_dataframe(current_pitches)
             pitch_csv = df_pitches.to_csv(index=False).encode("utf-8")
@@ -1735,20 +1705,13 @@ def main():
                         selected_rows=selected_gap_rows,
                         client_dict=client_dict,
                         service=current_run.get("service", service),
-                        market=run_markets[0] if run_markets else "",
                         api_key=api_key,
                         model=model_name,
                         delay_sec=delay_sec,
                         progress_callback=lambda p, msg: (gap_bar.progress(p), gap_status.text(msg))
                     )
-                    
-                    pitches_dict = {p.get("url", f"gap_{i}"): p for i, p in enumerate(gap_pitches)}
-                    existing_pitches = load_cached_pitches(pitches_cache_path)
-                    existing_pitches.update(pitches_dict)
-                    save_cached_pitches(existing_pitches, pitches_cache_path)
-                    st.session_state["outreach_pitches"] = list(existing_pitches.values())
+                    st.session_state["outreach_pitches"] = gap_pitches
                     st.success(f"🎉 Generated {len(gap_pitches)} personalized pitches for competitor gap targets!")
-                    st.rerun()
 
                 gap_csv = gap_pages.to_csv(index=False).encode("utf-8")
                 st.download_button(

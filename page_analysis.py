@@ -531,6 +531,8 @@ def analyse_single_page(
         main_container=main_container
     )
 
+    main_text_excerpt = " ".join(visible_text.split())[:1500] if visible_text else ""
+
     return {
         "url": clean_input_url,
         "domain": dom,
@@ -549,6 +551,8 @@ def analyse_single_page(
         "word_count": word_count,
         "citation_worthiness_score": citation_score,
         "citation_score_breakdown": score_breakdown,
+        "main_text_excerpt": main_text_excerpt,
+        "page_excerpt": main_text_excerpt,
         "fetch_status": "ok"
     }
 

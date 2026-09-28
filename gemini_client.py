@@ -28,8 +28,11 @@ _SESSION_CALLS_COUNT = 0
 
 def get_session_calls_count() -> int:
     """Return total number of Gemini calls made in the current session."""
-    if st is not None and "gemini_calls_count" in st.session_state:
-        return st.session_state.gemini_calls_count
+    if st is not None:
+        if "gemini_calls" in st.session_state:
+            return st.session_state["gemini_calls"]
+        if "gemini_calls_count" in st.session_state:
+            return st.session_state["gemini_calls_count"]
     return _SESSION_CALLS_COUNT
 
 
@@ -38,10 +41,10 @@ def increment_session_calls_count() -> int:
     global _SESSION_CALLS_COUNT
     _SESSION_CALLS_COUNT += 1
     if st is not None:
-        if "gemini_calls_count" not in st.session_state:
-            st.session_state.gemini_calls_count = 0
-        st.session_state.gemini_calls_count += 1
-        return st.session_state.gemini_calls_count
+        cnt = st.session_state.get("gemini_calls", st.session_state.get("gemini_calls_count", 0)) + 1
+        st.session_state["gemini_calls"] = cnt
+        st.session_state["gemini_calls_count"] = cnt
+        return cnt
     return _SESSION_CALLS_COUNT
 
 
@@ -50,7 +53,8 @@ def reset_session_calls_count():
     global _SESSION_CALLS_COUNT
     _SESSION_CALLS_COUNT = 0
     if st is not None:
-        st.session_state.gemini_calls_count = 0
+        st.session_state["gemini_calls"] = 0
+        st.session_state["gemini_calls_count"] = 0
 
 
 def enforce_pacing_delay(delay_sec: float = 6.0, status_callback=None):
@@ -60,7 +64,7 @@ def enforce_pacing_delay(delay_sec: float = 6.0, status_callback=None):
     elapsed = now - _LAST_CALL_TIMESTAMP
     if _LAST_CALL_TIMESTAMP > 0 and elapsed < delay_sec:
         wait_time = delay_sec - elapsed
-        if status_callback and wait_time > 1.0:
+        if status_callback and wait_time > 0.5:
             status_callback(f"Pacing delay: waiting {wait_time:.1f}s to respect free-tier RPM limit...")
         time.sleep(wait_time)
 
@@ -80,18 +84,21 @@ def normalize_model_name(model: str) -> str:
     return clean
 
 
-def extract_json_from_text(text: str):
-    """Extract and parse JSON from raw text or markdown code blocks."""
+def parse_json(text: str):
+    """
+    Helper parse_json(text): strip ``` fences, take substring between first { or [
+    and last } or ], json.loads, return None on failure.
+    """
     if not text:
         return None
-    
-    # 1. Direct JSON parse
+
+    # Direct JSON parse
     try:
         return json.loads(text.strip())
     except Exception:
         pass
 
-    # 2. Strip ```json ... ``` blocks
+    # Strip ``` fences
     cleaned = re.sub(r"^```(?:json)?\s*", "", text.strip(), flags=re.MULTILINE)
     cleaned = re.sub(r"\s*```$", "", cleaned, flags=re.MULTILINE).strip()
     try:
@@ -99,7 +106,7 @@ def extract_json_from_text(text: str):
     except Exception:
         pass
 
-    # 3. Find outermost { ... } or [ ... ]
+    # Substring between first { and last }
     first_brace = text.find("{")
     last_brace = text.rfind("}")
     if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
@@ -108,6 +115,7 @@ def extract_json_from_text(text: str):
         except Exception:
             pass
 
+    # Substring between first [ and last ]
     first_sq = text.find("[")
     last_sq = text.rfind("]")
     if first_sq != -1 and last_sq != -1 and last_sq > first_sq:
@@ -117,6 +125,11 @@ def extract_json_from_text(text: str):
             pass
 
     return None
+
+
+def extract_json_from_text(text: str):
+    """Alias to parse_json for backward compatibility."""
+    return parse_json(text)
 
 
 def gemini_generate(
@@ -165,6 +178,9 @@ def gemini_generate(
     if not effective_api_key:
         return {
             "text": "",
+            "grounding_chunks": [],
+            "raw": {},
+            "error": "No Gemini API Key provided. Please enter your key in the sidebar.",
             "json": None,
             "grounding_metadata": {},
             "raw_response": {},
@@ -173,8 +189,7 @@ def gemini_generate(
             "total_tokens": 0,
             "model": model,
             "latency_sec": 0.0,
-            "status": "error",
-            "error": "No Gemini API Key provided. Please enter your key in the sidebar."
+            "status": "error"
         }
 
     active_model = normalize_model_name(model)
@@ -199,7 +214,9 @@ def gemini_generate(
         }
     }
 
-    if json_mode:
+    # If both json_mode and use_search are requested, never combine them in API payload
+    # Drop responseMimeType from payload and parse JSON from the text instead
+    if json_mode and not use_search:
         payload["generationConfig"]["responseMimeType"] = "application/json"
 
     if use_search:
@@ -237,7 +254,7 @@ def gemini_generate(
                     # Parse JSON if json_mode requested
                     parsed_json = None
                     if json_mode:
-                        parsed_json = extract_json_from_text(answer_text)
+                        parsed_json = parse_json(answer_text)
 
                     # Extract token metadata
                     usage = data.get("usageMetadata", {})
@@ -246,9 +263,13 @@ def gemini_generate(
                     tot_tokens = usage.get("totalTokenCount") or (p_tokens + c_tokens)
 
                     grounding_meta = cand.get("groundingMetadata") or {}
+                    grounding_chunks = grounding_meta.get("groundingChunks", [])
 
                     return {
                         "text": answer_text,
+                        "grounding_chunks": grounding_chunks,
+                        "raw": data,
+                        "error": None,
                         "json": parsed_json,
                         "grounding_metadata": grounding_meta,
                         "raw_response": data,
@@ -257,8 +278,7 @@ def gemini_generate(
                         "total_tokens": tot_tokens,
                         "model": candidate_model,
                         "latency_sec": latency_sec,
-                        "status": "ok",
-                        "error": None
+                        "status": "ok"
                     }
 
                 # HTTP 429 Rate Limit / Quota Exhaustion or HTTP 503 Service Unavailable
@@ -267,11 +287,14 @@ def gemini_generate(
                     last_error = err_msg
                     if attempt < max_retries:
                         backoff = backoff_schedule[min(attempt, len(backoff_schedule) - 1)]
+                        msg = f"⚠️ Rate limited ({r.status_code}). Backing off for {int(backoff)}s (Retry {attempt + 1}/{max_retries})..."
                         if status_callback:
-                            status_callback(
-                                f"⚠️ Rate limited ({r.status_code}). Backing off for {int(backoff)}s "
-                                f"(Retry {attempt + 1}/{max_retries})..."
-                            )
+                            status_callback(msg)
+                        if st is not None:
+                            try:
+                                st.toast(msg, icon="⏳")
+                            except Exception:
+                                pass
                         time.sleep(backoff)
                         continue
                     else:
@@ -290,6 +313,9 @@ def gemini_generate(
                         # Authentication error: no point in retrying
                         return {
                             "text": "",
+                            "grounding_chunks": [],
+                            "raw": {},
+                            "error": last_error,
                             "json": None,
                             "grounding_metadata": {},
                             "raw_response": {},
@@ -298,8 +324,7 @@ def gemini_generate(
                             "total_tokens": 0,
                             "model": candidate_model,
                             "latency_sec": latency_sec,
-                            "status": "error",
-                            "error": last_error
+                            "status": "error"
                         }
                     break
 
@@ -319,6 +344,9 @@ def gemini_generate(
     # If all candidates and retries failed
     return {
         "text": "",
+        "grounding_chunks": [],
+        "raw": {},
+        "error": last_error or "Unknown error while communicating with Gemini API.",
         "json": None,
         "grounding_metadata": {},
         "raw_response": {},
@@ -327,6 +355,5 @@ def gemini_generate(
         "total_tokens": 0,
         "model": active_model,
         "latency_sec": 0.0,
-        "status": "error",
-        "error": last_error or "Unknown error while communicating with Gemini API."
+        "status": "error"
     }
