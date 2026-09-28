@@ -1,84 +1,79 @@
 # 🎯 AI Citation Link Prospector
 
-**AI Citation Link Prospector** is a specialised SEO & Digital PR intelligence tool designed to reverse-engineer Google Gemini's AI citations (via Google Search Grounding) for any niche and geographic market.
+**AI Citation Link Prospector** is a specialized SEO & Digital PR intelligence tool designed to reverse-engineer Google Gemini's AI citations (via Google Search Grounding) for any niche and geographic market.
 
-It identifies the exact websites Gemini cites when answering high-intent buyer and research queries, categorises them, scrapes and analyses each cited page, and calculates actionable **Priority Link-Building & Outreach Scores**.
-
----
-
-## 🌟 Key Features
-
-- **Campaign ID & Historical Run Grouping (`campaign_analytics.py`)**:
-  - Automatically tags each run with a slugified `campaign_id` (`client-service-market`).
-  - Sidebar **"Campaign History"** selector groups all runs by campaign for 1-click loading and historical comparison.
-- **Run Comparison & Trend Intelligence (New Tab: 📈 Trend)**:
-  - Compares baseline runs against latest runs with a concise narrative summary.
-  - **Brand Share of Voice Over Time**: Multi-run line chart tracking client & competitor SoV % across dates.
-  - **Domain Churn Tracking**: Automatic classification of 🆕 **New Domains Cited**, 🔻 **Lost Domains**, and 🔄 **Stable / Retained Domains**.
-  - **"Won Links Now Cited" Attribution**: Upload a CSV of built links (`url` column) to verify which acquired links/domains are now actively cited by Google Gemini's AI grounding answers.
-- **Multi-Market Mode (New Tab: 🌍 Markets)**:
-  - Enter multiple geographic markets (e.g., `the UK, the US, Australia`).
-  - Automatically runs queries across each target market with sequential rate-limiting safety.
-  - **Domain × Market Citation Heatmap**: Interactive matrix showing citation frequency across regions.
-  - **Brand SoV per Market**: Regional brand visibility breakdown.
-  - **Geo-Specific vs Global Link Targets**: Identifies local market targets vs global authority publications.
-- **Centralized Rate-Limited Gemini Client (`gemini_client.py`)**:
-  - Unified `gemini_generate()` function routing all AI interactions (grounding, prompt generation, brand analysis, pitch generation).
-  - Enforces sequential pacing delays (configurable, default 6.0s).
-  - Automatic exponential backoff retry on HTTP 429 and 503 with 20s / 40s / 60s delays (max 3 retries).
-  - Native JSON mode (`generationConfig.responseMimeType = "application/json"`).
-  - Real-time session call counter tracking total Gemini calls.
-- **Brand Position & Sentiment Analysis (`brand_analysis.py`)**:
-  - Evaluates exact recommendation rank position (1st, 2nd, 3rd) in AI answers via Gemini JSON mode.
-  - Computes average position (lower is better rank), % of answers in top 3, and sentiment breakdown (Positive / Neutral / Negative).
-  - Dedicated **"👑 Brand Position"** tab with rank comparison bar charts and per-answer breakdown inspector.
-  - Adds top-level **"Client Avg Position"** metric alongside Share of Voice.
-  - Automatic caching to `runs/brands_<run_timestamp>.json`.
-- **Personalized Outreach Pitch Generator (`pitch_generator.py`)**:
-  - Interactive selection of up to 10 prospect targets in **🎯 Link Targets** or **⚔️ Competitor Gaps** via `st.data_editor` checkboxes.
-  - Automatically fetches 1,500-character page excerpts and writes tailored pitches (under 120 words, zero fluff, 1 clear ask matching pitch type).
-  - Generates subject lines, suggested anchor texts, and 3 guest post topic ideas (for Guest post pitch type).
-  - Interactive copy-friendly expanders and CSV export. Strictly manual review (never auto-sends).
-- **Deep On-Page Analysis & Outreach Intelligence (`page_analysis.py`)**:
-  - Scrapes each AI-cited URL with 1-second domain pacing and Chrome user-agent headers.
-  - Skips UGC domains (Reddit, YouTube, Quora, Wikipedia, LinkedIn, Medium, Facebook, X/Twitter, etc.).
-  - Extracts **Page Title**, **H1**, and main content **Word Count**.
-  - Checks if the page links to or mentions your client brand.
-  - Detects **Competitors Present** and flags high-priority **Competitor Gaps** (where competitors are featured but your brand is omitted).
-  - Rule-based **Pitch Type Classification**: *"List inclusion"*, *"Directory listing"*, *"Guest post"*, *"Niche edit"*.
-  - **Contact & Email Discovery**: Discovers `mailto:` emails and contact page URLs.
-  - **Freshness Detection**: Extracts `last_updated` date from OpenGraph, JSON-LD schemas (`dateModified`/`datePublished`), or `<time>` tags.
-  - **Outbound Link Profiling**: Counts external links and calculates `% Sponsored / Nofollow` share.
-- **Domain-Level Roll-Up & Enhanced Priority Scoring**:
-  - Aggregates page analysis into the domain target table: `competitor_gap_pages`, `best_pitch_type`, `contact`, `guest_post_url`, `newest_last_updated`.
-  - **Boosted Priority Score Formula**:
-    $$\text{Priority Score} = \text{Citations} + (2 \times \text{Prompts}) + (2 \times \text{Competitor Wins}) + \frac{\text{Consistency \%}}{25} + (5 \times \text{Competitor Gap Pages})$$
-- **Free-Tier Rate Limiting Safety**:
-  - Sequential requests with configurable pacing delay (default: 6.0 seconds).
-  - Automatic exponential retry on HTTP 429 (`ResourceExhausted`), waiting 20s / 40s / 60s before failing safely.
-  - Transparent error logging without application crashes.
-- **8 Dedicated Interactive Tabs**:
-  - 🎯 **Link Targets**: Prioritised domain outreach list with action & pitch type filters, checkbox pitch generation, contact info, and CSV download.
-  - ⚔️ **Competitor Gaps**: Dedicated outreach table of exact URLs featuring competitors without your brand, checkbox selection, and direct CSV export.
-  - 👑 **Brand Position**: Brand ranking hierarchy (#1, #2, #3), top 3 share %, sentiment distribution charts, and per-answer deep-dive.
-  - 📈 **Trend**: Multi-run comparisons, Share of Voice line chart over time, domain churn, and "Won links now cited" attribution.
-  - 🌍 **Markets**: Cross-market citation heatmaps, geo-specific link targets, and regional Brand SoV.
-  - 📢 **Share of Voice**: Brand mention comparison and SoV % metrics.
-  - 📝 **Raw Answers & Citations**: Complete grounding queries, AI answers, and source citations.
-  - ⚡ **Token & Quota Monitor**: Per-query token breakdown, live RPM/RPD meters, and cost estimation.
-- **Run, Page, & Brand Cache Persistence**:
-  - Every run is automatically saved to `runs/<timestamp>.json`.
-  - Page analysis cached to `runs/pages_<run_timestamp>.json`.
-  - Brand position analysis cached to `runs/brands_<run_timestamp>.json`.
-  - Offline demo viewer loads sample runs and pre-scraped analysis instantly.
+It identifies the exact websites Gemini cites when answering high-intent buyer and research queries, categorises them, scrapes and analyses each cited page, calculates rule-based **Citation-Worthiness Scores**, builds AI-optimized **Content Briefs**, generates personalized **Outreach Pitches**, and exports executive white-label **Client Reports (Excel & HTML)**.
 
 ---
 
-## 🚀 Quick Start
+## 🌟 Complete Feature Breakdown
 
-### 1. Installation
+### 1. 📊 Citation-Worthiness Score (0–100 Rule-Based, No API Calls)
+Evaluates why Google Gemini cites specific pages by analyzing technical on-page authority signals:
+- **Freshness**: Published/updated within last 6 months (+20 pts) or last 12 months (+10 pts).
+- **Statistics & Data Points**: Density of percentages, currency figures (£, $, €), and research keywords (`study`, `survey`, `dataset`, `benchmark`) (+up to 15 pts).
+- **List Structure**: $\ge 3$ `<li>` list items in main content or numbered H2/H3 headings (+15 pts).
+- **FAQ Section**: Explicit FAQ headings or Schema `FAQPage`/`Question` JSON-LD (+15 pts).
+- **Structured Schema**: Valid JSON-LD structured data present (+10 pts).
+- **Content Depth**: Word count $\ge 1,000$ words (+15 pts) or $\ge 600$ words (+8 pts).
+- **Author Attribution**: Author meta tags, byline classes, or written-by text patterns (+10 pts).
+- **UI Metrics**: Displays scores across all target tables and calculates the **Average Citation Score** for the top 20 cited pages.
 
-Ensure Python 3.10+ is installed:
+### 2. 📑 AI Content Brief Generator (`content_brief.py`)
+- Single-click **"Build content brief"** action analyzing the titles, H2 heading outlines, and citation scores of the top 10 winning pages.
+- Uses Gemini in native JSON mode (`gemini-3.1-flash-lite`) to produce:
+  - **Common Winning Angles**: Editorial hooks and narrative structures favored by AI engines.
+  - **High-Intent Questions Answered**: Core user queries addressed across top ranking pages.
+  - **Data Points & Benchmarks**: Statistical figures and pricing ranges to include.
+  - **Recommended Content Format**: Optimal word count, heading hierarchy, and visual asset suggestions.
+  - **5 Linkable Asset / Guest Post Ideas**: High-authority concepts engineered to get cited by LLMs.
+- Displayed in the dedicated **"📑 Content Brief"** tab and cached to `runs/brief_<timestamp>.json`.
+
+### 3. 📄 White-Label Client Report Exports (`client_report.py`)
+- **Multi-Sheet Excel Workbook (`report.xlsx`)** via `openpyxl`:
+  - **`Summary`**: Executive campaign metadata, client/competitor overview, and token usage.
+  - **`Link targets`**: Prioritised domain targets with scores, citation frequency, and contact info.
+  - **`Competitor gaps`**: Exact URLs citing competitors where the client brand is missing.
+  - **`Brand position`**: Share of voice %, average position rank, and sentiment breakdown.
+  - **`Pitches`**: Tailored outreach email drafts, subject lines, and anchor suggestions.
+  - **`Content brief`**: Angles, questions, data benchmarks, format outline, and 5 linkable asset ideas.
+- **Executive Single-Page HTML Report (`report.html`)**:
+  - Clean, responsive dashboard with custom **Agency Name** entered in sidebar.
+  - Key KPI summary cards (Share of Voice, Avg Position, Targets, Gaps).
+  - Top 10 Link Targets & Top 5 Competitor Gaps tables.
+  - 5 Linkable Asset cards with AI citation rationale and outreach pitch angles.
+  - Full `@media print` support for instant PDF export in browser.
+
+### 4. 📈 Campaigns & Trend Intelligence (`campaign_analytics.py`)
+- **Campaign Slug History**: Groups runs by `client-service-market` slug with 1-click loading.
+- **Brand Share of Voice Over Time**: Multi-run line chart tracking client and competitor visibility trends.
+- **Domain Churn Tracking**: Automatic breakdown of 🆕 **New Domains Cited**, 🔻 **Lost Domains**, and 🔄 **Stable Domains**.
+- **"Won Links Now Cited" Attribution**: Upload a CSV of built links (`url` column) to measure if acquired links are now cited by Google Gemini.
+
+### 5. 🌍 Multi-Market Mode
+- Enter multiple target markets (e.g., `the UK, the US, Australia, Germany`).
+- Executes localized buyer queries across each region.
+- Interactive **Domain × Market Citation Heatmap** showing cross-border vs geo-specific authority targets.
+
+### 6. 👑 Brand Position & Sentiment Analysis (`brand_analysis.py`)
+- Extracts exact recommendation hierarchy (Position #1, #2, #3, or null) in AI responses.
+- Computes average rank position, % of answers in top 3, and sentiment breakdown (Positive / Neutral / Negative).
+
+### 7. ✉️ Personalized Outreach Pitch Generator (`pitch_generator.py`)
+- Checkbox selection in **Link Targets** or **Competitor Gaps** tables.
+- Crafts tailored pitches (under 120 words, zero fluff, single clear ask) matching pitch strategy (*List inclusion*, *Directory*, *Guest post*, *Niche edit*).
+- Interactive copy expanders and batch CSV export.
+
+### 8. ⚡ Rate-Limited Free-Tier Gemini Client (`gemini_client.py`)
+- Sequential pacing delay (default 6.0s).
+- Automatic backoff retries on HTTP 429/503 (20s / 40s / 60s delays, max 3 retries).
+- Native JSON response mode and session call counter.
+
+---
+
+## 🚀 Quick Start & Setup
+
+### 1. Requirements & Installation
 
 ```bash
 git clone https://github.com/Digital4local/ai-Link-building-tool.git
@@ -86,17 +81,26 @@ cd "Ai Ciataion Prospect"
 pip install -r requirements.txt
 ```
 
+#### Required Dependencies (`requirements.txt`):
+- `streamlit>=1.35.0`
+- `pandas>=2.0.0`
+- `requests>=2.31.0`
+- `python-dotenv>=1.0.0`
+- `beautifulsoup4>=4.12.0`
+- `lxml>=5.0.0`
+- `openpyxl>=3.1.2`
+
 ### 2. Configure API Key
 
 Get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
 
 Set it in `.env`:
-```bash
+```env
 GEMINI_API_KEY=AIzaSy...
 ```
-Or enter it directly in the Streamlit sidebar password field.
+*Or enter it directly in the Streamlit sidebar password field during execution.*
 
-### 3. Launch the App
+### 3. Run Application
 
 ```bash
 streamlit run app.py
@@ -104,36 +108,36 @@ streamlit run app.py
 
 ---
 
-## 📋 Workflow & Guide
+## ⏱️ Gemini Free-Tier Rate Limits & Best Practices
 
-1. **Enter Client & Campaign Details**:
-   - **Client Brand Name**: e.g., `Digital Web Solutions`
-   - **Client Domain**: e.g., `digitalwebsolutions.com`
-   - **Service / Niche**: e.g., `link building agencies`
-   - **Market / Location**: e.g., `the UK` or `United States`
-   - **Competitors**: One per line, formatted as `Brand Name | domain.com`
-   - **Publisher Inventory (Optional)**: CSV file with domain column to highlight pre-existing publisher relationships.
+| Model | Free Tier RPM | Free Tier RPD | Recommended Pacing |
+| :--- | :---: | :---: | :---: |
+| **`gemini-3.1-flash-lite`** (Recommended) | 15 RPM | 1,500 RPD | 4.0s - 6.0s delay |
+| **`gemini-2.5-flash`** | 15 RPM | 1,500 RPD | 5.0s - 6.0s delay |
+| **`gemini-2.5-pro`** | 2 RPM | 50 RPD | 30.0s delay |
 
-2. **Generate or Craft Prompts**:
-   - Click **Generate Prompts** or type custom prompts into the textarea.
-   - Adjust number of prompts (5–30) and repeats per prompt (1–3).
-
-3. **Run Campaign**:
-   - Click **Run Gemini Citation Prospector**.
-   - Monitor the real-time progress bar with rate-limiting pacing.
-
-4. **Analyse Cited Pages (Outreach Intelligence)**:
-   - Click **🔍 Analyse Cited Pages** to crawl cited URLs.
-   - Inspect competitor gap URLs in the **⚔️ Competitor Gaps** tab.
-   - Filter by pitch strategy (*List inclusion*, *Guest post*, *Directory*, *Niche edit*) in **🎯 Link Targets**.
-   - Download the enriched CSV target list for direct outreach execution.
+> [!TIP]
+> The app includes built-in rate-limiting safety. If you hit a 429 quota threshold, the client automatically pauses and retries with 20s / 40s / 60s backoff delays.
 
 ---
 
-## 🛡️ Architecture & REST Integration
+## 📂 Project Structure
 
-- **Endpoint**: `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`
-- **Headers**: `x-goog-api-key`, `Content-Type: application/json`
-- **Payload**: `{"contents": [{"parts": [{"text": prompt}]}], "tools": [{"google_search": {}}]}`
-- **Citation Extraction**: Extracts source domains from `candidates[0].groundingMetadata.groundingChunks[].web`, resolving Vertex Search redirects and extracting canonical root domains.
-- **On-Page Scraper**: Python `requests` + `BeautifulSoup4` with `lxml` parser, SSL fallback, and 1s domain delay.
+```
+├── app.py                   # Main Streamlit application & interactive UI
+├── page_analysis.py         # On-page scraping & Citation-Worthiness scoring (0-100)
+├── content_brief.py         # AI Content Brief generator (winning angles & 5 linkable asset ideas)
+├── client_report.py         # Multi-sheet Excel (openpyxl) & HTML white-label report exports
+├── brand_analysis.py        # Brand position ranking & sentiment analysis
+├── pitch_generator.py       # Tailored outreach email generator with CSV export
+├── campaign_analytics.py    # Trend comparison, won-link attribution, & multi-market heatmaps
+├── gemini_client.py         # Rate-limited REST Gemini client with retry backoff
+├── requirements.txt         # Project dependencies
+├── .env.example             # Example environment file
+└── runs/                    # Persistent JSON caches for runs, pages, brands, & briefs
+```
+
+---
+
+## 📄 License
+MIT License. Built for SEO professionals, digital PR agencies, and link-building teams.

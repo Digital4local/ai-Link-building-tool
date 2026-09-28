@@ -1,7 +1,15 @@
 """
 Page Analysis Module for AI Citation Link Prospector
 Performs detailed on-page analysis of AI-cited target pages for outreach readiness:
-- Title, H1, word count, main content extraction
+- Title, H1, H2/H3 headings, word count, main content extraction
+- Citation-Worthiness Score (0-100 rule-based scoring without API calls):
+    * Freshness: last 6 months (+20), last 12 months (+10)
+    * Statistics & data figures (+up to 15)
+    * List structure (>=3 <li> or numbered headings) (+15)
+    * FAQ headings or FAQPage schema (+15)
+    * Schema markup (JSON-LD) (+10)
+    * Depth: word_count >= 1000 (+15), >= 600 (+8)
+    * Author attribution (+10)
 - Links to client & competitor brand gap analysis
 - Intelligent pitch type classification (List inclusion, Directory, Guest post, Niche edit)
 - Contact & guest post write-for-us link discovery
@@ -13,6 +21,7 @@ Performs detailed on-page analysis of AI-cited target pages for outreach readine
 import re
 import json
 import time
+import datetime
 from urllib.parse import urlparse, urljoin
 import requests
 from bs4 import BeautifulSoup
@@ -73,7 +82,6 @@ def fetch_page(url: str, timeout: int = 10) -> tuple[str, int, str, str]:
             return final_url, status_code, "", "error"
 
         if status_code == 200:
-            # Check for Cloudflare / bot block page indicators
             text_sample = resp.text[:1000].lower()
             if "cf-browser-verification" in text_sample or "challenge-running" in text_sample or "just a moment..." in text_sample:
                 return final_url, 403, resp.text, "blocked"
@@ -84,7 +92,6 @@ def fetch_page(url: str, timeout: int = 10) -> tuple[str, int, str, str]:
             return final_url, status_code, "", "error"
 
     except requests.exceptions.SSLError:
-        # Retry without SSL verify as a fallback
         try:
             resp = requests.get(
                 clean_u,
@@ -123,13 +130,7 @@ def extract_last_updated(soup: BeautifulSoup, html: str) -> str:
     for script in soup.find_all("script", attrs={"type": "application/ld+json"}):
         try:
             data = json.loads(script.string or "{}")
-            if isinstance(data, list):
-                items = data
-            elif isinstance(data, dict):
-                items = data.get("@graph", [data])
-            else:
-                items = []
-
+            items = data if isinstance(data, list) else (data.get("@graph", [data]) if isinstance(data, dict) else [])
             for item in items:
                 if isinstance(item, dict):
                     for date_key in ["dateModified", "datePublished", "uploadDate"]:
@@ -164,7 +165,8 @@ def extract_contact_info(soup: BeautifulSoup, page_url: str, domain: str) -> str
     """
     Extract contact info:
     1. First mailto: email on the page
-    2. First contact page URL
+    2. Raw email in text
+    3. First contact page URL
     """
     if not soup:
         return ""
@@ -197,6 +199,124 @@ def extract_contact_info(soup: BeautifulSoup, page_url: str, domain: str) -> str
 
 
 # ----------------------------------------------------------------------------
+# Citation-Worthiness Score (Rule-based, 0-100)
+# ----------------------------------------------------------------------------
+def calculate_citation_worthiness_score(
+    soup: BeautifulSoup,
+    html: str,
+    visible_text: str,
+    last_updated_date: str,
+    word_count: int,
+    headings: list[str],
+    main_container=None
+) -> tuple[int, dict]:
+    """
+    Calculate 0-100 Citation-Worthiness Score:
+    - Freshness: updated in last 6 months (+20), last 12 months (+10)
+    - Statistics & Data: count of numbers with %, £/$, or study/survey/data (+up to 15)
+    - List structure: >=3 <li> in main content or numbered H2/H3 (+15)
+    - FAQ: FAQ heading or FAQPage JSON-LD (+15)
+    - Schema: any JSON-LD present (+10)
+    - Depth: word_count >= 1000 (+15), >= 600 (+8)
+    - Author: author meta or byline (+10)
+    Returns: (total_score_int, score_breakdown_dict)
+    """
+    if not html:
+        return 0, {
+            "freshness": 0, "statistics": 0, "list_structure": 0,
+            "faq": 0, "schema": 0, "depth": 0, "author": 0, "total": 0
+        }
+
+    # 1. Freshness (+20 for <=6 months, +10 for <=12 months)
+    freshness_score = 0
+    if last_updated_date:
+        try:
+            # Handle YYYY-MM-DD
+            d_parts = [int(p) for p in last_updated_date.split("-")[:3]]
+            up_date = datetime.date(d_parts[0], d_parts[1], d_parts[2])
+            ref_date = datetime.date(2026, 9, 28)
+            diff_days = (ref_date - up_date).days
+            if diff_days <= 185:
+                freshness_score = 20
+            elif diff_days <= 365:
+                freshness_score = 10
+        except Exception:
+            freshness_score = 10  # Fallback if date is present but unparsed
+    else:
+        # If no explicit date tag, give standard baseline if current year appears in title/H1
+        if "2026" in visible_text[:1000] or "2025" in visible_text[:1000]:
+            freshness_score = 10
+
+    # 2. Statistics & Data Proof Points (+up to 15)
+    # Search for %, £/$, and data keywords
+    pct_matches = re.findall(r'\b\d+(?:\.\d+)?%', visible_text)
+    curr_matches = re.findall(r'[£$€]\s*\d+|\b\d+\s*(?:dollars|pounds|gbp|usd|eur)', visible_text, re.I)
+    kw_matches = re.findall(r'\b(study|survey|dataset|benchmark|statistics|statistically|reported that|according to data)\b', visible_text, re.I)
+    
+    total_stat_points = len(pct_matches) + len(curr_matches) + len(kw_matches)
+    statistics_score = min(15, total_stat_points * 3) if total_stat_points > 0 else 0
+
+    # 3. List Structure (+15)
+    list_score = 0
+    li_count = 0
+    if main_container:
+        li_count = len(main_container.find_all("li"))
+    elif soup:
+        li_count = len(soup.find_all("li"))
+
+    numbered_heading = any(re.search(r'^\d+[\.\)]\s|\b\d+\s+(best|top|ways|tips|steps|reasons|agencies|tools|methods|strategies)', h, re.I) for h in headings)
+
+    if li_count >= 3 or numbered_heading:
+        list_score = 15
+
+    # 4. FAQ (+15)
+    faq_score = 0
+    faq_heading = any(re.search(r'\bfaq\b|\bfrequently asked\b|\bquestions\b', h, re.I) for h in headings)
+    has_faq_jsonld = "FAQPage" in html or "Question" in html
+
+    if faq_heading or has_faq_jsonld:
+        faq_score = 15
+
+    # 5. Schema Markup (+10)
+    schema_score = 0
+    if soup and soup.find("script", attrs={"type": "application/ld+json"}):
+        schema_score = 10
+    elif "application/ld+json" in html:
+        schema_score = 10
+
+    # 6. Depth (+15 for >=1000 words, +8 for >=600 words)
+    depth_score = 0
+    if word_count >= 1000:
+        depth_score = 15
+    elif word_count >= 600:
+        depth_score = 8
+
+    # 7. Author Attribution (+10)
+    author_score = 0
+    has_author_meta = bool(soup.find("meta", attrs={"name": re.compile(r"author", re.I)}) or soup.find("meta", attrs={"property": re.compile(r"author", re.I)}))
+    has_author_tag = bool(soup.find(attrs={"class": re.compile(r"author|byline|written-by", re.I)}) or soup.find(attrs={"rel": "author"}))
+    has_author_text = bool(re.search(r'\bwritten by\b|\bauthor:?\s+[a-z]+|\bby\s+[A-Z][a-z]+\s+[A-Z][a-z]+', visible_text[:1500]))
+
+    if has_author_meta or has_author_tag or has_author_text:
+        author_score = 10
+
+    total_score = min(100, freshness_score + statistics_score + list_score + faq_score + schema_score + depth_score + author_score)
+
+    breakdown = {
+        "freshness": freshness_score,
+        "statistics": statistics_score,
+        "list_structure": list_score,
+        "faq": faq_score,
+        "schema": schema_score,
+        "depth": depth_score,
+        "author": author_score,
+        "total": total_score
+    }
+
+    return total_score, breakdown
+
+
+# ----------------------------------------------------------------------------
 # On-Page Detailed Analysis
 # ----------------------------------------------------------------------------
 def analyse_single_page(
@@ -212,7 +332,7 @@ def analyse_single_page(
 ) -> dict:
     """
     Fetch and analyze a single AI-cited URL.
-    Returns a dictionary of all on-page fields.
+    Returns a dictionary of all on-page fields + Citation-Worthiness Score + Headings.
     """
     clean_input_url = clean_url_fn(url)
     dom = root_domain_fn(clean_input_url)
@@ -229,6 +349,7 @@ def analyse_single_page(
             "domain": dom,
             "page_title": f"{dom} (UGC / Community Platform)",
             "h1": "",
+            "headings": [],
             "links_to_client": False,
             "competitors_present": [],
             "competitor_gap": False,
@@ -239,6 +360,8 @@ def analyse_single_page(
             "outbound_links": 0,
             "sponsored_or_nofollow_share": 0.0,
             "word_count": 0,
+            "citation_worthiness_score": 45,
+            "citation_score_breakdown": {"total": 45},
             "fetch_status": "skipped_ugc"
         }
 
@@ -258,6 +381,7 @@ def analyse_single_page(
             "domain": dom,
             "page_title": "",
             "h1": "",
+            "headings": [],
             "links_to_client": False,
             "competitors_present": [],
             "competitor_gap": False,
@@ -268,6 +392,8 @@ def analyse_single_page(
             "outbound_links": 0,
             "sponsored_or_nofollow_share": 0.0,
             "word_count": 0,
+            "citation_worthiness_score": 30,
+            "citation_score_breakdown": {"total": 30},
             "fetch_status": fetch_status
         }
 
@@ -277,11 +403,19 @@ def analyse_single_page(
     except Exception:
         soup = BeautifulSoup(html, "html.parser")
 
-    # 1. Page Title & H1
+    # 1. Page Title, H1, and Headings List
     title_tag = soup.find("title")
     page_title = title_tag.get_text().strip() if title_tag else ""
     h1_tag = soup.find("h1")
     h1_text = h1_tag.get_text().strip() if h1_tag else ""
+
+    # Extract H2 and H3 headings for Content Briefs
+    headings_list = []
+    for h in soup.find_all(["h2", "h3"]):
+        ht = h.get_text().strip()
+        if ht and len(ht) > 3 and len(ht) < 150:
+            tag_name = h.name.upper()
+            headings_list.append(f"{tag_name}: {ht}")
 
     # Remove script, style, nav, footer for cleaner text analysis
     for tag in soup(["script", "style", "noscript", "svg", "header", "footer"]):
@@ -314,7 +448,7 @@ def analyse_single_page(
             if c_name not in competitors_present:
                 competitors_present.append(c_name)
 
-    # Competitor gap: Competitor present but client omitted
+    # Competitor gap
     competitor_gap = bool(competitors_present) and not links_to_client
 
     # 3. Outbound links in main content & Sponsored / Nofollow share
@@ -352,7 +486,6 @@ def analyse_single_page(
     # 6. Contact extraction
     contact = extract_contact_info(soup, final_url, dom)
 
-    # If contact or guest post missing, optionally probe homepage
     if not contact or not guest_post_url:
         homepage_url = f"https://{dom}/"
         if homepage_url != final_url:
@@ -387,11 +520,23 @@ def analyse_single_page(
     else:
         pitch_type = "Niche edit"
 
+    # 9. Calculate Citation-Worthiness Score (0-100)
+    citation_score, score_breakdown = calculate_citation_worthiness_score(
+        soup=soup,
+        html=html,
+        visible_text=visible_text,
+        last_updated_date=last_updated,
+        word_count=word_count,
+        headings=headings_list,
+        main_container=main_container
+    )
+
     return {
         "url": clean_input_url,
         "domain": dom,
         "page_title": page_title,
         "h1": h1_text,
+        "headings": headings_list[:12],
         "links_to_client": links_to_client,
         "competitors_present": competitors_present,
         "competitor_gap": competitor_gap,
@@ -402,6 +547,8 @@ def analyse_single_page(
         "outbound_links": outbound_count,
         "sponsored_or_nofollow_share": sponsored_nofollow_share,
         "word_count": word_count,
+        "citation_worthiness_score": citation_score,
+        "citation_score_breakdown": score_breakdown,
         "fetch_status": "ok"
     }
 
@@ -453,13 +600,14 @@ def analyse_all_cited_pages(
                 domain_last_fetch=domain_last_fetch
             )
             results.append(row)
-        except Exception as ex:
+        except Exception:
             dom = root_domain_fn(u)
             results.append({
                 "url": u,
                 "domain": dom,
                 "page_title": "",
                 "h1": "",
+                "headings": [],
                 "links_to_client": False,
                 "competitors_present": [],
                 "competitor_gap": False,
@@ -470,6 +618,8 @@ def analyse_all_cited_pages(
                 "outbound_links": 0,
                 "sponsored_or_nofollow_share": 0.0,
                 "word_count": 0,
+                "citation_worthiness_score": 30,
+                "citation_score_breakdown": {"total": 30},
                 "fetch_status": "error"
             })
 
@@ -490,41 +640,40 @@ def merge_page_analysis_into_domains(domain_table: pd.DataFrame, pages_df: pd.Da
     - contact: best contact found
     - guest_post_url: guest post url if found
     - newest_last_updated: latest date
+    - citation_worthiness_score: mean citation-worthiness score for the domain
     - priority_score += 5 * competitor_gap_pages
     """
     if domain_table.empty:
         return domain_table
 
     if pages_df.empty:
-        # Initialize default columns if pages_df is empty
         updated = domain_table.copy()
-        for col in ["competitor_gap_pages", "best_pitch_type", "contact", "guest_post_url", "newest_last_updated"]:
+        for col in ["competitor_gap_pages", "best_pitch_type", "contact", "guest_post_url", "newest_last_updated", "citation_worthiness_score"]:
             if col not in updated.columns:
-                updated[col] = 0 if col == "competitor_gap_pages" else ""
+                updated[col] = 0 if col in ("competitor_gap_pages", "citation_worthiness_score") else ""
         return updated
 
     updated = domain_table.copy()
 
-    # Pre-calculate domain-level aggregations
     rollup = {}
     for dom, group in pages_df.groupby("domain"):
         gap_count = int(group["competitor_gap"].sum())
         
-        # Pitch type frequency
         pitch_counts = group["pitch_type"].value_counts()
         best_pitch = pitch_counts.index[0] if not pitch_counts.empty else "Niche edit"
 
-        # Best contact
         contacts = [str(c).strip() for c in group["contact"] if str(c).strip()]
         best_contact = contacts[0] if contacts else ""
 
-        # Guest post URL
         gp_urls = [str(g).strip() for g in group["guest_post_url"] if str(g).strip()]
         best_gp = gp_urls[0] if gp_urls else ""
 
-        # Newest last updated date
         dates = [str(d).strip() for d in group["last_updated"] if str(d).strip()]
         newest_date = sorted(dates, reverse=True)[0] if dates else ""
+
+        # Mean citation worthiness score
+        scores = group.get("citation_worthiness_score", pd.Series([50]))
+        avg_score = int(scores.mean()) if not scores.empty else 50
 
         rollup[dom] = {
             "competitor_gap_pages": gap_count,
@@ -532,6 +681,7 @@ def merge_page_analysis_into_domains(domain_table: pd.DataFrame, pages_df: pd.Da
             "contact": best_contact,
             "guest_post_url": best_gp,
             "newest_last_updated": newest_date,
+            "citation_worthiness_score": avg_score
         }
 
     # Map rollup values to domain table
@@ -540,11 +690,11 @@ def merge_page_analysis_into_domains(domain_table: pd.DataFrame, pages_df: pd.Da
     updated["contact"] = updated["domain"].apply(lambda d: rollup.get(d, {}).get("contact", ""))
     updated["guest_post_url"] = updated["domain"].apply(lambda d: rollup.get(d, {}).get("guest_post_url", ""))
     updated["newest_last_updated"] = updated["domain"].apply(lambda d: rollup.get(d, {}).get("newest_last_updated", ""))
+    updated["citation_worthiness_score"] = updated["domain"].apply(lambda d: rollup.get(d, {}).get("citation_worthiness_score", 50))
 
-    # Update Priority Score: priority_score += 5 * competitor_gap_pages
+    # Boost priority score: priority_score += 5 * competitor_gap_pages
     base_score = updated["priority_score"]
     updated["priority_score"] = round(base_score + (5.0 * updated["competitor_gap_pages"]), 1)
 
-    # Re-sort by updated priority score
     updated = updated.sort_values(by=["priority_score", "citations"], ascending=[False, False]).reset_index(drop=True)
     return updated

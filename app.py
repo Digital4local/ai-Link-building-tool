@@ -5,6 +5,9 @@ high-intent buyer and research queries, then turns those domains into a prioriti
 link-building & digital PR outreach target list.
 
 Key Features & Modules:
+- Citation-Worthiness Score (0-100 rule-based scoring: freshness, stats, list structure, FAQ, schema, depth, author)
+- Content Brief Generator (content_brief.py): Synthesizes top cited pages into winning angles, structure outline, and 5 linkable asset ideas
+- Client Report Export (client_report.py): White-label multi-sheet Excel (report.xlsx) and executive HTML (report.html)
 - Campaign Management: Slugified campaign IDs, grouped campaign run history in sidebar
 - Run Comparison & Trend Analysis: Brand SoV over time, domain churn, and won-link attribution
 - Multi-Market Mode: Cross-market queries, domain x market citation heatmaps, geo-specific link targets
@@ -64,6 +67,16 @@ from campaign_analytics import (
     analyze_multi_market_run,
     parse_won_links_file,
     root_domain_clean
+)
+from content_brief import (
+    generate_content_brief,
+    load_cached_brief,
+    save_cached_brief,
+    get_brief_cache_path
+)
+from client_report import (
+    export_excel_report,
+    generate_html_report
 )
 
 
@@ -166,7 +179,7 @@ def get_rate_limit_metrics():
     TPM_LIMIT = 1_000_000
     RPD_LIMIT = 1_500
 
-    # Pricing estimate (Flash tier: $0.075 / 1M prompt tokens, $0.30 / 1M output tokens)
+    # Pricing estimate
     p_tokens = tracker.get("prompt_tokens", 0)
     c_tokens = tracker.get("candidates_tokens", 0)
     est_cost_usd = (p_tokens * 0.075 / 1_000_000) + (c_tokens * 0.30 / 1_000_000)
@@ -258,7 +271,6 @@ def extract_grounding_citations(grounding_meta: dict) -> list[str]:
         title = (web.get("title") or "").strip()
 
         found_url = ""
-        # 1. Inspect title
         if title:
             if "." in title and " " not in title and not title.endswith("."):
                 found_url = "https://" + title if not title.startswith("http") else title
@@ -267,7 +279,6 @@ def extract_grounding_citations(grounding_meta: dict) -> list[str]:
                 if match:
                     found_url = "https://" + match.group(1)
 
-        # 2. Inspect URI
         if not found_url and uri:
             parsed_host = urlparse(uri).netloc.lower()
             if "vertexaisearch.cloud.google.com" not in parsed_host and "google.com" not in parsed_host:
@@ -389,7 +400,6 @@ def ask_gemini_grounded(
         grounding_meta = res.get("grounding_metadata", {})
         urls = extract_grounding_citations(grounding_meta)
 
-        # Supplement with explicit URLs in text
         text_urls = re.findall(r'https?://[^\s)\]"\'>]+', answer_text)
         for tu in text_urls:
             cleaned_tu = clean_url(tu.rstrip(".,;:)"))
@@ -492,7 +502,6 @@ def run_grounded_campaign_multi_market(
 
     for mkt in markets:
         for p_idx, base_prompt in enumerate(prompts):
-            # Adapt prompt for current market if multi-market
             if len(markets) > 1 and base_market in base_prompt:
                 prompt = base_prompt.replace(base_market, mkt)
             else:
@@ -645,6 +654,7 @@ def analyse(
             "top_urls": top_urls_str,
             "competitor_gap_pages": 0,
             "best_pitch_type": "Niche edit" if action_bucket.startswith("Outreach") else ("Directory listing" if action_bucket.startswith("Directory") else "Community / UGC"),
+            "citation_worthiness_score": 50,
             "contact": "",
             "guest_post_url": "",
             "newest_last_updated": ""
@@ -785,27 +795,39 @@ def main():
             border: 1px solid rgba(30, 136, 229, 0.2);
             margin-bottom: 12px;
         }
+        .action-card {
+            border-radius: 12px;
+            padding: 16px 18px;
+            margin: 10px 0px 14px 0px;
+            height: 100%;
+        }
         .analyse-card {
             background: linear-gradient(135deg, rgba(16, 185, 129, 0.06), rgba(59, 130, 246, 0.06));
-            border-radius: 12px;
-            padding: 16px 20px;
             border: 1px solid rgba(16, 185, 129, 0.25);
-            margin: 12px 0px 18px 0px;
         }
         .brand-card {
             background: linear-gradient(135deg, rgba(245, 158, 11, 0.06), rgba(236, 72, 153, 0.06));
-            border-radius: 12px;
-            padding: 16px 20px;
             border: 1px solid rgba(245, 158, 11, 0.25);
-            margin: 12px 0px 18px 0px;
         }
-        .trend-banner {
+        .brief-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(168, 85, 247, 0.06));
+            border: 1px solid rgba(99, 102, 241, 0.25);
+        }
+        .export-banner {
             background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
-            color: #F8FAFC;
             border-radius: 12px;
             padding: 18px 22px;
-            border-left: 6px solid #38BDF8;
-            margin-bottom: 20px;
+            color: #F8FAFC;
+            margin: 16px 0px 22px 0px;
+            border: 1px solid #334155;
+        }
+        .score-pill {
+            background: #DCFCE7;
+            color: #15803D;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.82rem;
         }
         .stTabs [data-baseweb="tab-list"] {
             gap: 6px;
@@ -814,7 +836,7 @@ def main():
             border-radius: 8px 8px 0px 0px;
             padding: 8px 14px;
             font-weight: 600;
-            font-size: 0.92rem;
+            font-size: 0.90rem;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -822,7 +844,7 @@ def main():
     # Header
     st.markdown('<div class="main-header">🎯 AI Citation Link Prospector</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="sub-header">Reverse-engineer Google Gemini citations, track campaign trends & won links, analyze multi-market heatmaps, and generate outreach pitches.</div>',
+        '<div class="sub-header">Reverse-engineer Google Gemini citations, calculate 0-100 citation-worthiness, synthesize content briefs, and export white-label client reports.</div>',
         unsafe_allow_html=True
     )
 
@@ -861,6 +883,13 @@ def main():
         else:
             model_name = chosen_option.split(" ")[0]
 
+        # White-label agency name
+        agency_name = st.text_input(
+            "Agency / White-Label Header",
+            value="Digital PR & SEO Intelligence",
+            help="Your agency name displayed on exported Excel and HTML client reports."
+        )
+
         # Quick connection test
         if st.button("🧪 Test API Key & Model", use_container_width=True):
             if not api_key:
@@ -888,9 +917,7 @@ def main():
             help="Delay between sequential queries to stay comfortably within free-tier rate limits (15 RPM)."
         )
 
-        # --------------------------------------------------------------------
         # Token & Limit Counter Widget
-        # --------------------------------------------------------------------
         st.divider()
         st.subheader("⚡ Token & Quota Counter")
         
@@ -918,7 +945,6 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-        # Live RPM Meter
         rpm_val = rate_metrics['rpm']
         rpm_pct = rate_metrics['rpm_pct']
         rpm_color = "🟢 Safe" if rpm_val <= 8 else ("🟡 Moderate" if rpm_val <= 12 else "🔴 Near Limit")
@@ -933,9 +959,7 @@ def main():
             reset_token_tracker()
             st.rerun()
 
-        # --------------------------------------------------------------------
-        # 1. Campaign History Selector (Grouped by Campaign ID)
-        # --------------------------------------------------------------------
+        # Campaign History Selector
         st.divider()
         st.subheader("📂 Campaign History")
 
@@ -970,7 +994,6 @@ def main():
                     st.session_state["run_source_file"] = chosen_run_dict["filepath"]
                     st.session_state["current_campaign_id"] = chosen_camp
                     
-                    # Load matching page analysis cache
                     cache_path = get_page_cache_path(st.session_state["run"], chosen_run_dict["filepath"])
                     cached_pages_df = load_cached_pages(cache_path)
                     if not cached_pages_df.empty:
@@ -978,13 +1001,19 @@ def main():
                     else:
                         st.session_state.pop("pages_df", None)
 
-                    # Load matching brand position cache
                     brand_cache_path = get_brand_cache_path(st.session_state["run"], chosen_run_dict["filepath"])
                     cached_brands = load_cached_brands(brand_cache_path)
                     if cached_brands:
                         st.session_state["brand_results"] = cached_brands
                     else:
                         st.session_state.pop("brand_results", None)
+
+                    brief_cache_path = get_brief_cache_path(st.session_state["run"], chosen_run_dict["filepath"])
+                    cached_brief = load_cached_brief(brief_cache_path)
+                    if cached_brief:
+                        st.session_state["content_brief"] = cached_brief
+                    else:
+                        st.session_state.pop("content_brief", None)
 
                     st.session_state.pop("outreach_pitches", None)
                     st.success(f"Loaded campaign run: {os.path.basename(chosen_run_dict['filepath'])}")
@@ -1011,6 +1040,13 @@ def main():
                     st.session_state["brand_results"] = cached_brands
                 else:
                     st.session_state.pop("brand_results", None)
+
+                brief_cache_path = get_brief_cache_path(st.session_state["run"], uploaded_run.name)
+                cached_brief = load_cached_brief(brief_cache_path)
+                if cached_brief:
+                    st.session_state["content_brief"] = cached_brief
+                else:
+                    st.session_state.pop("content_brief", None)
 
                 st.session_state.pop("outreach_pitches", None)
                 st.success("Uploaded run loaded successfully!")
@@ -1090,7 +1126,6 @@ def main():
                 )
                 st.session_state["prompts_text"] = "\n".join(generated)
 
-    # Prompts textarea
     default_prompts = st.session_state.get(
         "prompts_text",
         "\n".join([t.format(s=service, loc=markets_list[0]) for t in TEMPLATES[:num_prompts]])
@@ -1102,7 +1137,6 @@ def main():
     )
     prompts_list = [p.strip() for p in prompts_input.splitlines() if p.strip()]
 
-    # Multi-market badge
     if len(markets_list) > 1:
         st.info(f"🌍 **Multi-Market Mode Active:** Will run `{len(prompts_list)}` prompts across **{len(markets_list)} markets** ({', '.join(markets_list)}) for a total of **{len(prompts_list) * len(markets_list) * repeats}** queries.")
 
@@ -1165,6 +1199,7 @@ def main():
         st.session_state["current_campaign_id"] = campaign_id
         st.session_state.pop("pages_df", None)
         st.session_state.pop("brand_results", None)
+        st.session_state.pop("content_brief", None)
         st.session_state.pop("outreach_pitches", None)
         st.success(f"🎉 Run complete! Saved results to `{saved_path}` for campaign `{campaign_id}`")
 
@@ -1204,7 +1239,7 @@ def main():
                 all_cited_urls.append(u)
     unique_cited_urls = list(dict.fromkeys([clean_url(u) for u in all_cited_urls if u]))
 
-    # Check for cached page analysis if not already in session state
+    # Load matching caches
     run_source = st.session_state.get("run_source_file", "")
     page_cache_path = get_page_cache_path(current_run, run_source)
     if "pages_df" not in st.session_state or st.session_state["pages_df"].empty:
@@ -1214,7 +1249,6 @@ def main():
 
     pages_df = st.session_state.get("pages_df", pd.DataFrame())
 
-    # Check for cached brand position analysis
     brand_cache_path = get_brand_cache_path(current_run, run_source)
     if "brand_results" not in st.session_state or not st.session_state["brand_results"]:
         cached_b = load_cached_brands(brand_cache_path)
@@ -1224,15 +1258,22 @@ def main():
     brand_results = st.session_state.get("brand_results", [])
     brand_summary_df = calculate_brand_position_summary(brand_results, client_dict, comp_list) if brand_results else pd.DataFrame()
 
-    # If page analysis is available, merge into domain table and boost priority score (+5 per gap page)
+    brief_cache_path = get_brief_cache_path(current_run, run_source)
+    if "content_brief" not in st.session_state or not st.session_state["content_brief"]:
+        cached_brief = load_cached_brief(brief_cache_path)
+        if cached_brief:
+            st.session_state["content_brief"] = cached_brief
+
+    content_brief_data = st.session_state.get("content_brief", {})
+
     if not pages_df.empty:
         table = merge_page_analysis_into_domains(table, pages_df)
 
     st.divider()
     st.subheader(f"📊 Campaign: `{campaign_id}` — {current_run.get('service', 'Niche')} ({', '.join(run_markets)})")
 
-    # Top 5 Metrics Row (including Client Avg Position)
-    m1, m2, m3, m4, m5 = st.columns(5)
+    # Top 6 Metrics Row
+    m1, m2, m3, m4, m5, m6 = st.columns(6)
     total_successful_answers = len(records) - len(errors)
     unique_domains = len(table) if not table.empty else 0
     outreach_targets = int(table["action"].str.startswith("Outreach").sum()) if not table.empty else 0
@@ -1249,28 +1290,38 @@ def main():
         if not c_brand_row.empty and c_brand_row["avg_position_display"].iloc[0] != "-":
             client_avg_pos = c_brand_row["avg_position_display"].iloc[0]
 
+    # Average Citation-Worthiness Score for top 20 pages
+    avg_top20_score_str = "N/A"
+    if not pages_df.empty and "citation_worthiness_score" in pages_df.columns:
+        top20_pages = pages_df.sort_values(by="citation_worthiness_score", ascending=False).head(20)
+        if not top20_pages.empty:
+            avg_top20_score = int(top20_pages["citation_worthiness_score"].mean())
+            avg_top20_score_str = f"{avg_top20_score}/100"
+
     with m1:
         st.metric("Total Answers", total_successful_answers, help="Total AI grounded answers collected")
     with m2:
-        st.metric("Unique Domains Cited", unique_domains, help="Total distinct root domains referenced")
+        st.metric("Unique Domains", unique_domains, help="Total distinct root domains referenced")
     with m3:
         st.metric("Outreach Targets", outreach_targets, help="Non-competitor, non-directory target domains")
     with m4:
         st.metric("Client Share of Voice", client_sov, help="% of answers mentioning client brand")
     with m5:
-        st.metric("Client Avg Position", client_avg_pos, help="Average ranking position when mentioned in AI recommendations (lower is better)")
+        st.metric("Client Avg Position", client_avg_pos, help="Average ranking position in AI recommendations (1.0 = top pick)")
+    with m6:
+        st.metric("Avg Citation Score", avg_top20_score_str, help="Mean Citation-Worthiness Score for top 20 cited pages (0-100)")
 
     # ------------------------------------------------------------------------
-    # Intelligence Action Cards (On-Page & Brand Position)
+    # Intelligence Action Cards (On-Page, Brand Position, Content Brief)
     # ------------------------------------------------------------------------
-    act_col1, act_col2 = st.columns(2)
+    act_col1, act_col2, act_col3 = st.columns(3)
 
     with act_col1:
         st.markdown("""
-        <div class="analyse-card">
+        <div class="action-card analyse-card">
             <h4 style="margin-top:0px; margin-bottom:4px; color:#10B981;">🔍 1. Deep On-Page Analysis</h4>
-            <p style="margin-bottom:10px; font-size:0.88rem; color:#475569;">
-                Scrapes cited pages to find <strong>Competitor Gaps</strong>, contacts, guest post links, and updates domain priority scores (+5 per gap).
+            <p style="margin-bottom:10px; font-size:0.86rem; color:#475569;">
+                Scrapes pages, finds <strong>Competitor Gaps</strong>, contacts, dates, and computes <strong>0-100 Citation-Worthiness Scores</strong>.
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -1303,19 +1354,19 @@ def main():
         if not pages_df.empty:
             gaps_found = int(pages_df["competitor_gap"].sum())
             contacts_found = int((pages_df["contact"] != "").sum())
-            st.caption(f"✅ `{len(pages_df)}` pages analyzed | ⚔️ `{gaps_found}` gaps | 📧 `{contacts_found}` contacts")
+            st.caption(f"✅ `{len(pages_df)}` pages | ⚔️ `{gaps_found}` gaps | 📧 `{contacts_found}` contacts")
 
     with act_col2:
         st.markdown("""
-        <div class="brand-card">
+        <div class="action-card brand-card">
             <h4 style="margin-top:0px; margin-bottom:4px; color:#F59E0B;">👑 2. Brand Position & Sentiment</h4>
-            <p style="margin-bottom:10px; font-size:0.88rem; color:#475569;">
-                Evaluates exact recommendation rank position (1st, 2nd, 3rd) and sentiment hierarchy across all answers via Gemini JSON mode.
+            <p style="margin-bottom:10px; font-size:0.86rem; color:#475569;">
+                Evaluates exact recommendation rank position (#1, #2, #3) and sentiment hierarchy across answers.
             </p>
         </div>
         """, unsafe_allow_html=True)
 
-        brand_btn_label = "🧠 Analyze Brand Position & Sentiment" if not brand_results else "🔄 Re-analyze Brand Positions"
+        brand_btn_label = "🧠 Analyze Brand Positions" if not brand_results else "🔄 Re-analyze Brand Positions"
         if st.button(brand_btn_label, use_container_width=True):
             brand_bar = st.progress(0.0)
             brand_status = st.empty()
@@ -1332,13 +1383,99 @@ def main():
 
             save_cached_brands(new_brand_results, brand_cache_path)
             st.session_state["brand_results"] = new_brand_results
-            st.success("🎉 Brand position and sentiment analysis completed successfully!")
+            st.success("🎉 Brand position and sentiment analysis completed!")
             st.rerun()
 
         if brand_results:
-            st.caption(f"✅ Evaluated `{len(brand_results)}` AI answers across `{len(brand_summary_df)}` brands.")
+            st.caption(f"✅ Evaluated `{len(brand_results)}` answers across `{len(brand_summary_df)}` brands.")
 
-    # Failed queries expander (if any)
+    with act_col3:
+        st.markdown("""
+        <div class="action-card brief-card">
+            <h4 style="margin-top:0px; margin-bottom:4px; color:#6366F1;">📝 3. AI Content Brief</h4>
+            <p style="margin-bottom:10px; font-size:0.86rem; color:#475569;">
+                Synthesizes top 10 cited pages into winning angles, structure outline, and <strong>5 Linkable-Asset Ideas</strong>.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        brief_btn_label = "📝 Build Content Brief" if not content_brief_data else "🔄 Re-build Content Brief"
+        if st.button(brief_btn_label, use_container_width=True):
+            top_pages_for_brief = pages_df.to_dict(orient="records") if not pages_df.empty else []
+            with st.spinner("Synthesizing content brief and 5 linkable-asset ideas with Gemini..."):
+                brief_res = generate_content_brief(
+                    top_pages=top_pages_for_brief,
+                    client_dict=client_dict,
+                    service=current_run.get("service", service),
+                    market=run_markets[0],
+                    api_key=api_key,
+                    model=model_name,
+                    delay_sec=delay_sec
+                )
+                save_cached_brief(brief_res, brief_cache_path)
+                st.session_state["content_brief"] = brief_res
+                st.success("🎉 Generated editorial content brief & 5 linkable asset ideas!")
+                st.rerun()
+
+        if content_brief_data:
+            st.caption(f"✅ Content brief built with `{len(content_brief_data.get('content_ideas', []))}` linkable asset ideas.")
+
+    # ------------------------------------------------------------------------
+    # Executive Client Report Export Section (Excel & HTML)
+    # ------------------------------------------------------------------------
+    st.markdown("""
+    <div class="export-banner">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h4 style="margin:0px 0px 4px 0px; color:#38BDF8;">📥 White-Label Client Report Deliverables</h4>
+                <p style="margin:0px; font-size:0.88rem; color:#94A3B8;">
+                    Download boardroom-ready deliverables including multi-sheet Excel (.xlsx) and executive HTML (.html) reports with your custom agency branding.
+                </p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    gap_pages_for_export = pages_df[pages_df["competitor_gap"] == True].copy() if not pages_df.empty and "competitor_gap" in pages_df.columns else pd.DataFrame()
+
+    rcol1, rcol2, rcol3 = st.columns([1, 1, 2])
+    with rcol1:
+        excel_bytes = export_excel_report(
+            run_payload=current_run,
+            table_df=table,
+            gap_pages_df=gap_pages_for_export,
+            brand_summary_df=brand_summary_df,
+            pitches_list=st.session_state.get("outreach_pitches", []),
+            content_brief_data=content_brief_data,
+            agency_name=agency_name
+        )
+        st.download_button(
+            label="📊 Download Excel Report (.xlsx)",
+            data=excel_bytes,
+            file_name=f"ai_citation_report_{campaign_id}_{datetime.datetime.now().strftime('%Y%m%d')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type="primary",
+            use_container_width=True
+        )
+
+    with rcol2:
+        html_report_str = generate_html_report(
+            run_payload=current_run,
+            table_df=table,
+            gap_pages_df=gap_pages_for_export,
+            brand_summary_df=brand_summary_df,
+            content_brief_data=content_brief_data,
+            agency_name=agency_name
+        )
+        st.download_button(
+            label="📄 Download HTML Report (.html)",
+            data=html_report_str.encode("utf-8"),
+            file_name=f"ai_citation_report_{campaign_id}_{datetime.datetime.now().strftime('%Y%m%d')}.html",
+            mime="text/html",
+            type="secondary",
+            use_container_width=True
+        )
+
     if errors:
         with st.expander(f"⚠️ {len(errors)} Queries Encountered Errors", expanded=True):
             st.error("Some queries encountered errors. Review details below:")
@@ -1350,12 +1487,13 @@ def main():
         return
 
     # ------------------------------------------------------------------------
-    # All Detailed Result Tabs (8 Tabs)
+    # All Detailed Result Tabs (9 Tabs)
     # ------------------------------------------------------------------------
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
         "🎯 Link Targets",
         "⚔️ Competitor Gaps",
         "👑 Brand Position",
+        "📑 Content Brief",
         "📈 Trend",
         "🌍 Markets",
         "📢 Share of Voice",
@@ -1368,9 +1506,8 @@ def main():
     # ------------------------------------------------------------------------
     with tab1:
         st.markdown("### Prioritised Link Targets & Outreach List")
-        st.caption("Select up to 10 targets to automatically generate tailored, high-converting outreach pitches.")
+        st.caption("Domains cited by Gemini with Citation-Worthiness Scores (0-100). Select up to 10 targets to write pitches.")
         
-        # Filters
         fcol1, fcol2, fcol3 = st.columns([2, 2, 2])
         with fcol1:
             all_actions = sorted(table["action"].unique())
@@ -1392,7 +1529,6 @@ def main():
                 filtered_table["contact"].str.contains(search_query, case=False, na=False)
             ]
 
-        # Interactive selection with checkbox via st.data_editor
         display_editor_df = filtered_table.copy()
         display_editor_df.insert(0, "Select", False)
 
@@ -1405,6 +1541,7 @@ def main():
                 "Select": st.column_config.CheckboxColumn("Select", help="Check to write pitch for this target", default=False),
                 "domain": st.column_config.TextColumn("Root Domain", width="medium"),
                 "priority_score": st.column_config.NumberColumn("Priority Score", format="%.1f", help="Base citations + prompts + competitor gaps (+5 per gap page)"),
+                "citation_worthiness_score": st.column_config.NumberColumn("Citation Score (0-100)", help="Freshness, statistics, schema, depth, author score"),
                 "citations": st.column_config.NumberColumn("Citations"),
                 "prompts_cited_in": st.column_config.NumberColumn("Prompts"),
                 "competitor_gap_pages": st.column_config.NumberColumn("Gap Pages"),
@@ -1448,7 +1585,6 @@ def main():
             st.session_state["outreach_pitches"] = generated_pitches
             st.success(f"🎉 Successfully drafted {len(generated_pitches)} personalized outreach pitches!")
 
-        # Render Generated Pitches Section
         current_pitches = st.session_state.get("outreach_pitches", [])
         if current_pitches:
             st.divider()
@@ -1534,6 +1670,7 @@ def main():
                         "url": st.column_config.LinkColumn("Page URL", width="large"),
                         "domain": st.column_config.TextColumn("Domain"),
                         "page_title": st.column_config.TextColumn("Page Title", width="large"),
+                        "citation_worthiness_score": st.column_config.NumberColumn("Citation Score (0-100)"),
                         "competitors_list": st.column_config.TextColumn("Competitors Featured", width="medium"),
                         "pitch_type": st.column_config.TextColumn("Pitch Strategy"),
                         "contact": st.column_config.TextColumn("Outreach Contact", width="medium"),
@@ -1595,7 +1732,7 @@ def main():
         )
 
         if not brand_results or brand_summary_df.empty:
-            st.info("💡 Click the **'🧠 Analyze Brand Position & Sentiment'** button above to evaluate brand ranking hierarchy and sentiment across all Gemini answers.")
+            st.info("💡 Click the **'🧠 Analyze Brand Positions'** button above to evaluate brand ranking hierarchy and sentiment across all Gemini answers.")
         else:
             st.markdown("#### 🏆 Brand Visibility & Recommendation Hierarchy")
             st.dataframe(
@@ -1669,9 +1806,62 @@ def main():
             )
 
     # ------------------------------------------------------------------------
-    # Tab 4: Trend & Run Comparison (New Feature)
+    # Tab 4: Content Brief (New Feature)
     # ------------------------------------------------------------------------
     with tab4:
+        st.markdown("### 📑 AI Search Editorial Content Brief")
+        st.caption("Synthesizes the common angles, questions answered, data benchmarks, and recommended formats from the top 10 AI-cited pages to engineer high-authority assets that earn citations.")
+
+        if not content_brief_data:
+            st.info("💡 Click the **'📝 Build Content Brief'** button above to analyze the top 10 AI-cited pages and synthesize an authority content plan.")
+        else:
+            # 1. Winning Angles & Questions Answered
+            b_col1, b_col2 = st.columns(2)
+            with b_col1:
+                st.markdown("#### 🎯 Winning Narrative Angles")
+                for a in content_brief_data.get("common_angles", []):
+                    st.markdown(f"- {a}")
+
+                st.markdown("#### 📊 Key Data Points & Benchmarks Used")
+                for d in content_brief_data.get("data_points_used", []):
+                    st.markdown(f"- 📈 {d}")
+
+            with b_col2:
+                st.markdown("#### ❓ Buyer Questions Answered")
+                for q in content_brief_data.get("questions_answered", []):
+                    st.markdown(f"- 💡 {q}")
+
+                fmt = content_brief_data.get("recommended_format", {})
+                if isinstance(fmt, dict):
+                    st.markdown("#### 📐 Recommended Format & Structure")
+                    st.markdown(f"**Format:** `{fmt.get('content_type', 'Benchmark Roundup')}`")
+                    st.markdown(f"**Target Word Count:** `{fmt.get('recommended_word_count', '2,400 - 3,000 words')}`")
+                    st.markdown(f"**Visual Assets:** {fmt.get('visual_assets', '')}")
+
+            # 2. 5 Linkable Asset Ideas
+            st.divider()
+            st.markdown("#### 💡 5 High-Authority Linkable Asset & Guest Post Ideas (Engineered for AI Citations)")
+            st.caption("Content pieces designed to answer buyer evaluation queries and earn direct citations from Google Gemini:")
+
+            ideas = content_brief_data.get("content_ideas", [])
+            for idx, idea in enumerate(ideas):
+                with st.expander(f"💡 Asset #{idx+1}: {idea.get('title', '')} — [{idea.get('format', 'Data Study')}]", expanded=(idx==0)):
+                    st.markdown(f"**Asset Format:** `{idea.get('format', 'Original Data Study')}`")
+                    st.markdown(f"**Why AI Cites It:** {idea.get('why_ai_cites_it', '')}")
+                    st.markdown(f"**Target Publisher Outreach Angle:** {idea.get('target_outreach_angle', '')}")
+
+            brief_json_str = json.dumps(content_brief_data, indent=2)
+            st.download_button(
+                label="📥 Download Content Brief (JSON)",
+                data=brief_json_str,
+                file_name=f"content_brief_{campaign_id}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json"
+            )
+
+    # ------------------------------------------------------------------------
+    # Tab 5: Trend & Run Comparison
+    # ------------------------------------------------------------------------
+    with tab5:
         st.markdown("### 📈 Campaign Trend & Run Comparison")
         st.caption("Compare citation dynamics across multiple runs in this campaign, monitor Brand SoV growth, detect domain churn, and verify Won Links now cited in AI answers.")
 
@@ -1680,8 +1870,6 @@ def main():
 
         if len(curr_campaign_runs) < 2:
             st.info(f"💡 This campaign (`{campaign_id}`) currently has **{len(curr_campaign_runs)} run**. Run another iteration or select a campaign with multiple runs from the sidebar to view historical comparison trends.")
-            
-            # Offer demo trend loader
             demo_tcol1, demo_tcol2 = st.columns([1, 2])
             with demo_tcol1:
                 if st.button("📥 Load Sample Trend Campaign (2 Runs)", use_container_width=True, type="secondary"):
@@ -1695,9 +1883,11 @@ def main():
                     cached_b = load_cached_brands("runs/brands_sample_campaign_trend_2.json")
                     if cached_b:
                         st.session_state["brand_results"] = cached_b
+                    cached_br = load_cached_brief("runs/brief_sample_campaign_trend_2.json")
+                    if cached_br:
+                        st.session_state["content_brief"] = cached_br
                     st.rerun()
 
-        # Run Comparison Selector
         all_available_runs = scan_all_campaign_runs(RUNS_DIR)
         active_camp_runs = all_available_runs.get(campaign_id, curr_campaign_runs)
 
@@ -1715,7 +1905,6 @@ def main():
                 latest_idx = latest_options.index(selected_latest_label)
                 latest_run_dict = active_camp_runs[latest_idx]["data"]
 
-            # Won Links CSV Upload / Demo
             st.markdown("##### 🔗 'Won Links' Verification (Upload Built Links CSV):")
             wcol1, wcol2 = st.columns([2, 1])
             with wcol1:
@@ -1738,10 +1927,8 @@ def main():
             else:
                 won_urls = st.session_state.get("won_urls_list", [])
 
-            # Run comparison analysis
             comp_results = compare_two_runs(earlier_run_dict, latest_run_dict, won_links_urls=won_urls)
 
-            # Top Summary Sentence Banner
             st.markdown(f"""
             <div class="trend-banner">
                 <h4 style="margin-top:0px; margin-bottom:6px; color:#38BDF8;">📊 Campaign Trend Summary</h4>
@@ -1751,13 +1938,11 @@ def main():
             </div>
             """, unsafe_allow_html=True)
 
-            # Visual Share of Voice Trend Chart across all runs
             st.markdown("#### 📈 Brand Share of Voice (%) Over Time")
             sov_trend_series = compute_multi_run_sov_trend_series(active_camp_runs)
             if not sov_trend_series.empty:
                 st.line_chart(sov_trend_series, use_container_width=True)
 
-            # Domain Churn: New vs Lost vs Retained
             st.markdown("#### 🔄 Cited Domain Movement (Churn Analysis)")
             ch1, ch2, ch3 = st.columns(3)
             with ch1:
@@ -1782,7 +1967,6 @@ def main():
                     else:
                         st.caption("No dropped domains.")
 
-            # Won Links Attribution Table
             if not comp_results["won_links_analysis"].empty:
                 st.markdown("#### 🎯 Won Links Attribution in AI Grounding Citations")
                 st.caption("Verifies which URLs/domains where your team built links are now actively cited by Google Gemini answers.")
@@ -1800,9 +1984,9 @@ def main():
                 )
 
     # ------------------------------------------------------------------------
-    # Tab 5: Multi-Market Mode (New Feature)
+    # Tab 6: Multi-Market Mode
     # ------------------------------------------------------------------------
-    with tab5:
+    with tab6:
         st.markdown("### 🌍 Multi-Market Citation Intelligence")
         st.caption("Compare how Google Gemini's AI grounding citations and recommendations vary across different geographic markets (UK, US, Australia, etc.).")
 
@@ -1824,9 +2008,11 @@ def main():
                     cached_b = load_cached_brands("runs/brands_sample_multi_market_run.json")
                     if cached_b:
                         st.session_state["brand_results"] = cached_b
+                    cached_br = load_cached_brief("runs/brief_sample_multi_market_run.json")
+                    if cached_br:
+                        st.session_state["content_brief"] = cached_br
                     st.rerun()
         else:
-            # 1. Domain x Market Citation Heatmap Matrix
             st.markdown("#### 🗺️ Domain × Market Citation Matrix")
             st.caption("Total times each domain was cited by Gemini across each geographic market:")
             
@@ -1851,16 +2037,13 @@ def main():
                     mime="text/csv"
                 )
 
-            # 2. Brand Share of Voice per Market
             st.markdown("#### 📢 Brand Share of Voice (%) Across Markets")
             m_sov_df = multi_market_results["market_sov_df"]
             if not m_sov_df.empty:
                 st.dataframe(m_sov_df, use_container_width=True, hide_index=True)
-                
                 chart_m_sov = m_sov_df.set_index("Brand")
                 st.bar_chart(chart_m_sov, use_container_width=True)
 
-            # 3. Geo-Specific vs Global Authority Domains
             st.divider()
             st.markdown("#### 🎯 Geo-Specific Targets vs Global Authority Domains")
             
@@ -1884,9 +2067,9 @@ def main():
                     st.caption("No multi-market global authorities found.")
 
     # ------------------------------------------------------------------------
-    # Tab 6: Share of Voice
+    # Tab 7: Share of Voice
     # ------------------------------------------------------------------------
-    with tab6:
+    with tab7:
         st.markdown("### Brand Share of Voice Comparison")
         st.caption("Percentage of valid Gemini answers that directly mention each brand.")
         
@@ -1910,9 +2093,9 @@ def main():
             st.info("No brand names provided to calculate Share of Voice.")
 
     # ------------------------------------------------------------------------
-    # Tab 7: Raw Answers & Citations
+    # Tab 8: Raw Answers & Citations
     # ------------------------------------------------------------------------
-    with tab7:
+    with tab8:
         st.markdown("### Full Gemini Answers & Grounding Citations")
         for i, r in enumerate(records):
             if r.get("error"):
@@ -1931,9 +2114,9 @@ def main():
                     st.caption("No explicit source links extracted.")
 
     # ------------------------------------------------------------------------
-    # Tab 8: Token & Quota Monitor
+    # Tab 9: Token & Quota Monitor
     # ------------------------------------------------------------------------
-    with tab8:
+    with tab9:
         st.markdown("### ⚡ Gemini Token Consumption & Quota Monitor")
         st.caption("Detailed token usage breakdown, rate limit metrics, and free-tier quota analysis for this campaign.")
 
