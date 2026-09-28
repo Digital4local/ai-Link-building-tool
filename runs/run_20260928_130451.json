@@ -1,0 +1,83 @@
+{
+  "campaign_id": "solar-for-you-solar-installation-the-uk",
+  "created": "2026-09-28T13:04:51",
+  "client": {
+    "name": "solar for you ",
+    "domain": "https://solarforyou.co.uk/"
+  },
+  "service": "solar installation ",
+  "location": "the UK",
+  "markets": [
+    "the UK"
+  ],
+  "competitors": [
+    {
+      "name": "https://www.greenmatch.co.uk/",
+      "domain": ""
+    },
+    {
+      "name": "https://heatable.co.uk/",
+      "domain": ""
+    },
+    {
+      "name": "https://solar4good.co.uk/",
+      "domain": ""
+    }
+  ],
+  "prompts": [
+    "Who are the top-rated solar panel installers in the UK for 2024?",
+    "What criteria should I use to compare solar panel installation quotes in the UK?"
+  ],
+  "repeats": 1,
+  "model": "gemini-3.1-flash-lite",
+  "total_tokens": 2137,
+  "total_prompt_tokens": 266,
+  "total_candidates_tokens": 1871,
+  "records": [
+    {
+      "prompt_index": 0,
+      "prompt": "Who are the top-rated solar panel installers in the UK for 2024?",
+      "market": "the UK",
+      "repeat": 1,
+      "answer": "Selecting a solar panel installer in the UK requires careful vetting, as the industry is governed by specific accreditation schemes to ensure safety and performance. When evaluating installers, always verify they are **MCS (Microgeneration Certification Scheme) certified**, as this is a requirement for most government grants and export tariffs (like the Smart Export Guarantee).\n\nHere are the top-rated solar panel installers and platforms for 2024 based on industry reputation, customer feedback, and service coverage.\n\n### 1. Top-Rated National Installers\nThese companies are frequently highlighted in consumer guides for their wide service areas and high Trustpilot ratings:\n\n*   **Project Solar UK:** One of the largest installers in the country. They are well-regarded for their extensive warranties and nationwide coverage.\n    *   *Website:* https://projectsolaruk.com\n*   **Effective Home:** Frequently cited by consumer advocacy sites for their end-to-end service, including solar PV, battery storage, and EV charging integration.\n    *   *Website:* https://effectivehome.co.uk\n*   **Egg:** A modern, tech-focused energy company that specializes in solar arrays and home battery storage solutions. They are known for transparent digital customer journeys.\n    *   *Website:* https://engie.co.uk (Note: Egg is now independent but originated from the Engie group; see https://www.lifewithegg.com)\n*   **Green Energy Together:** Highly rated for their customer service and technical support throughout the installation process.\n    *   *Website:* https://greenenergytogether.co.uk\n\n### 2. How to Find and Vet Local Installers\nBecause solar installation quality depends heavily on the specific engineering team in your area, using an aggregator or a verified directory is often more effective than relying on a single national brand.\n\n*   **MCS Certified Directory:** This is the official government-backed body. You should use their search tool to ensure any company you consider is currently certified.\n    *   *Website:* https://mcscertified.com\n*   **Which? Trusted Traders:** This directory features installers who have been vetted and endorsed by the consumer rights organization *Which?*. It is one of the most reliable ways to avoid \"rogue traders.\"\n    *   *Website:* https://trustedtraders.which.co.uk\n*   **Trustpilot:** For real-time sentiment, filter by \"Solar Energy Company\" in the UK category. Look for companies with high review volumes and recent activity.\n    *   *Website:* https://uk.trustpilot.com\n\n### 3. Important Considerations for 2024\nWhen researching these companies, ensure you request quotes from at least three different providers. Use the following resources to understand your rights and the current market:\n\n*   **Energy Saving Trust:** Provides impartial advice on solar panels, battery storage, and current government incentives (such as the 0% VAT rate on solar installations).\n    *   *Website:* https://energysavingtrust.org.uk\n*   **Reddit (r/SolarUK):** This community is an excellent resource for \"boots on the ground\" advice. Users frequently share their quotes, installation experiences, and technical troubleshooting tips.\n    *   *Website:* https://reddit.com/r/SolarUK\n\n### Summary Recommendation\n1.  **Check Certification:** Always verify the company on the **MCS Certified** website first.\n2.  **Compare Quotes:** Use the **Energy Saving Trust** guides to understand what a \"fair\" price looks like for your roof size.\n3.  **Check Vetting:** Use **Which? Trusted Traders** to find local contractors with a proven track record.\n4.  **Community Sentiment:** Visit **r/SolarUK** to see if your potential installer has had any recent negative press from other homeowners.\n\n### Cited Sources & Target URLs\n\n*   **MCS Certified (Official Accreditation):** https://mcscertified.com\n*   **Energy Saving Trust (Government-backed advice):** https://energysavingtrust.org.uk\n*   **Which? Trusted Traders:** https://trustedtraders.which.co.uk\n*   **Project Solar UK:** https://projectsolaruk.com\n*   **Effective Home:** https://effectivehome.co.uk\n*   **Life with Egg:** https://www.lifewithegg.com\n*   **Green Energy Together:** https://greenenergytogether.co.uk\n*   **Trustpilot (UK Solar Category):** https://uk.trustpilot.com\n*   **Reddit (r/SolarUK Community):** https://reddit.com/r/SolarUK",
+      "urls": [
+        "https://projectsolaruk.com",
+        "https://effectivehome.co.uk",
+        "https://engie.co.uk",
+        "https://www.lifewithegg.com",
+        "https://greenenergytogether.co.uk",
+        "https://mcscertified.com",
+        "https://trustedtraders.which.co.uk",
+        "https://uk.trustpilot.com",
+        "https://energysavingtrust.org.uk",
+        "https://reddit.com/r/SolarUK"
+      ],
+      "prompt_tokens": 135,
+      "candidates_tokens": 984,
+      "total_tokens": 1119,
+      "latency_sec": 14.18,
+      "mode": "AI Web Citation Engine",
+      "error": ""
+    },
+    {
+      "prompt_index": 1,
+      "prompt": "What criteria should I use to compare solar panel installation quotes in the UK?",
+      "market": "the UK",
+      "repeat": 1,
+      "answer": "Comparing solar panel installation quotes in the UK requires a methodical approach to ensure you are comparing \"apples with apples.\" Because the solar industry involves significant capital expenditure, you must verify the technical, financial, and regulatory credentials of each installer.\n\n### 1. Verification and Accreditation\nBefore comparing costs, ensure the installer is legitimate. In the UK, the **Microgeneration Certification Scheme (MCS)** is the gold standard.\n*   **MCS Certification:** An MCS-certified installer is mandatory if you wish to apply for the **Smart Export Guarantee (SEG)**, which allows you to get paid for exporting excess electricity to the grid.\n*   **RECC Membership:** The **Renewable Energy Consumer Code (RECC)** provides consumer protection. Installers must adhere to their code of practice.\n\n### 2. Compare the \"System Design\" (Not just price)\nQuotes often vary because of the hardware quality and the projected yield.\n*   **Panel Efficiency & Warranty:** Compare the efficiency percentage of the panels. Look for long-term product warranties (typically 20\u201325 years) and performance warranties.\n*   **Inverter Quality:** The inverter is the \"brain\" of the system. Research the brand (e.g., SolarEdge, Enphase, GivEnergy) to ensure it has a strong reputation for longevity.\n*   **Estimated Annual Generation (kWh):** Every quote should provide an estimated annual output in kilowatt-hours (kWh). If one quote is significantly cheaper but estimates lower generation, it may be using inferior hardware or a poor roof layout.\n\n### 3. Analyze the Breakdown of Costs\nA professional quote should itemize:\n*   **Hardware:** Panels, inverter, mounting system, and battery storage (if applicable).\n*   **Scaffolding & Access:** Always clarify if scaffolding is included in the price or if it is an \"extra\" that could lead to hidden costs.\n*   **DNO Application:** The installer must notify the **Distribution Network Operator (DNO)**. Ensure this administrative fee is included in the quote.\n*   **VAT:** Since 2022, solar panels have a **0% VAT rate** for residential installations in the UK. Ensure your quote reflects this correctly.\n\n### 4. Financials and Consumer Protection\n*   **Payment Terms:** Avoid companies that demand 100% payment upfront. A standard industry practice is a small deposit followed by payment upon completion and commissioning.\n*   **Insurance-Backed Guarantees:** Check if the installer provides an insurance-backed warranty. This protects you if the installer goes out of business while your system is under warranty.\n\n### 5. Independent Research Resources\nUse these platforms to validate your findings:\n*   **Which? Trusted Traders:** Use this to find installers vetted by the UK\u2019s leading consumer advocate.\n*   **MCS Certified Installer Directory:** Use the official search tool to verify if the company is currently certified.\n*   **Energy Saving Trust:** Provides impartial advice on solar technology and government incentives.\n\n### Summary Checklist for Comparison\n| Criteria | What to look for |\n| :--- | :--- |\n| **Accreditation** | MCS & RECC certified? |\n| **Hardware** | Tier 1 panels? Reliable inverter brand? |\n| **System Size** | kWp (Kilowatt peak) capacity? |\n| **Performance** | Estimated annual kWh generation? |\n| **Total Cost** | VAT 0% applied? Scaffolding included? |\n| **Warranty** | Insurance-backed? |\n\n---\n\n### Cited Sources & Target URLs\n*   **Microgeneration Certification Scheme (MCS):** https://mcscertified.com\n*   **Renewable Energy Consumer Code (RECC):** https://www.recc.org.uk\n*   **Which? Trusted Traders (Solar):** https://trustedtraders.which.co.uk\n*   **Energy Saving Trust (Solar Panels):** https://energysavingtrust.org.uk/advice/solar-panels\n*   **Ofgem (Smart Export Guarantee):** https://www.ofgem.gov.uk/environmental-and-social-schemes/smart-export-guarantee-seg",
+      "urls": [
+        "https://mcscertified.com",
+        "https://www.recc.org.uk",
+        "https://trustedtraders.which.co.uk",
+        "https://energysavingtrust.org.uk/advice/solar-panels",
+        "https://www.ofgem.gov.uk/environmental-and-social-schemes/smart-export-guarantee-seg"
+      ],
+      "prompt_tokens": 131,
+      "candidates_tokens": 887,
+      "total_tokens": 1018,
+      "latency_sec": 7.4,
+      "mode": "AI Web Citation Engine",
+      "error": ""
+    }
+  ]
+}

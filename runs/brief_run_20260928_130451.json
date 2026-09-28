@@ -1,0 +1,67 @@
+{
+  "common_angles": [
+    "Financial viability and ROI projections (Savings vs. Installation costs)",
+    "Technical feasibility assessments (Roof orientation, space, and suitability)",
+    "Trust and verification (MCS certification, quality marks, and trader vetting)",
+    "Integration with modern home energy systems (EV chargers, heat pumps, and battery storage)"
+  ],
+  "questions_answered": [
+    "How much do solar panels cost and how much can I save on energy bills?",
+    "Are my roof and home suitable for solar panel installation?",
+    "How do I find a reputable and MCS-certified installer?",
+    "What are the long-term benefits of solar energy for UK households?"
+  ],
+  "data_points_used": [
+    "Average installation costs for UK homes",
+    "Energy savings potential per household",
+    "MCS certification standards",
+    "Frequency of renewable installations in the UK"
+  ],
+  "recommended_format": {
+    "content_type": "Comprehensive Authority Guide with Interactive Calculator",
+    "recommended_word_count": "2,500 - 3,000 words",
+    "structure_outline": [
+      "H1: The Ultimate Guide to Solar Panel Installation in the UK (2025 Edition)",
+      "H2: Is Solar Right for Your Home? A 3-Step Feasibility Check",
+      "H2: Current Installation Costs and Government Grant Opportunities",
+      "H2: Calculating Your ROI: How Much Will You Actually Save?",
+      "H2: Understanding MCS Certification and Why It Matters",
+      "H2: Integrating Solar with EV Chargers and Battery Storage",
+      "H2: How to Vet and Select a Trusted Installer",
+      "H2: Frequently Asked Questions About UK Solar"
+    ],
+    "visual_assets": "Interactive ROI calculator, a map of UK solar irradiance, a comparison table of solar panel types, and a checklist for vetting installers."
+  },
+  "content_ideas": [
+    {
+      "title": "The 2025 UK Solar ROI Index: Regional Cost-Benefit Analysis",
+      "format": "Original Data Study",
+      "why_ai_cites_it": "AI models prioritize granular, region-specific data that provides concrete answers to 'how much will I save' queries.",
+      "target_outreach_angle": "Pitch to regional news outlets and personal finance blogs as a localized guide to energy savings."
+    },
+    {
+      "title": "Solar + Storage: The Definitive Guide to Future-Proofing Your Home",
+      "format": "Technical Deep-Dive",
+      "why_ai_cites_it": "AI favors content that connects solar to broader trends like EV adoption and heat pump integration.",
+      "target_outreach_angle": "Pitch to green technology publications and home improvement influencers as an expert resource on energy independence."
+    },
+    {
+      "title": "The MCS Standards Checklist: How to Avoid Rogue Solar Traders",
+      "format": "Consumer Advocacy Guide",
+      "why_ai_cites_it": "AI models are trained to prioritize safety and quality assurance, making authoritative 'how-to-choose' guides highly citable.",
+      "target_outreach_angle": "Pitch to consumer rights groups and local council energy advice pages as a definitive safety resource."
+    },
+    {
+      "title": "UK Solar Adoption Trends: A Year-on-Year Analysis",
+      "format": "Industry Report",
+      "why_ai_cites_it": "AI search engines cite trend reports to provide context on the maturity and growth of the renewable energy sector.",
+      "target_outreach_angle": "Pitch to industry trade journals and sustainability newsletters as a source of market intelligence."
+    },
+    {
+      "title": "Solar Panel Maintenance: Maximizing Efficiency in the UK Climate",
+      "format": "Practical How-To Guide",
+      "why_ai_cites_it": "AI models seek out long-tail, post-installation advice to provide comprehensive answers for existing solar owners.",
+      "target_outreach_angle": "Pitch to gardening and home maintenance blogs as a 'must-have' maintenance schedule for homeowners."
+    }
+  ]
+}
