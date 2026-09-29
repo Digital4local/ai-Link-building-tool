@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, ArrowRight, ArrowLeft, CheckCircle2, Globe, Building2, Target, Key } from 'lucide-react';
 import { Button } from '../components/Button';
+import { useAudit } from '../context/AuditContext';
 import type { CampaignProfile } from '../data/mockData';
 
 export interface OnboardingPageProps {
@@ -12,20 +13,43 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({
   onComplete,
   onCancel,
 }) => {
-  const [step, setStep] = useState(1);
-  const [clientName, setClientName] = useState('Digital4Local');
-  const [clientDomain, setClientDomain] = useState('digital4local.com');
-  const [serviceNiche, setServiceNiche] = useState('AI Growth & Local SEO Agencies');
-  const [markets, setMarkets] = useState('United Kingdom, United States');
-  const [competitorsText, setCompetitorsText] = useState(
-    'FatJoe | fatjoe.com\nSiege Media | siegemedia.com\nPage One Power | pageonepower.com'
-  );
-  const [apiKey, setApiKey] = useState('');
+  const {
+    clientName: defaultName,
+    setClientName: setCtxClientName,
+    clientDomain: defaultDomain,
+    setClientDomain: setCtxClientDomain,
+    service: defaultService,
+    setService: setCtxService,
+    locationInput: defaultLoc,
+    setLocationInput: setCtxLocationInput,
+    competitors: defaultComps,
+    setCompetitors: setCtxCompetitors,
+    apiKey: defaultApiKey,
+    setApiKey: setCtxApiKey,
+    runAudit,
+  } = useAudit();
 
-  const handleNext = () => {
+  const [step, setStep] = useState(1);
+  const [clientName, setClientName] = useState(defaultName || 'Digital4Local');
+  const [clientDomain, setClientDomain] = useState(defaultDomain || 'digital4local.com');
+  const [serviceNiche, setServiceNiche] = useState(defaultService || 'AI Growth & Local SEO Agencies');
+  const [markets, setMarkets] = useState(defaultLoc || 'United Kingdom, United States');
+  const [competitorsText, setCompetitorsText] = useState(
+    defaultComps || 'FatJoe | fatjoe.com\nSiege Media | siegemedia.com\nPage One Power | pageonepower.com'
+  );
+  const [apiKey, setApiKey] = useState(defaultApiKey || '');
+
+  const handleNext = async () => {
     if (step < 4) {
       setStep(step + 1);
     } else {
+      setCtxClientName(clientName);
+      setCtxClientDomain(clientDomain);
+      setCtxService(serviceNiche);
+      setCtxLocationInput(markets);
+      setCtxCompetitors(competitorsText);
+      if (apiKey) setCtxApiKey(apiKey);
+
       const parsedCompetitors = competitorsText
         .split('\n')
         .filter((l) => l.trim().length > 0)

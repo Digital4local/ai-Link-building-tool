@@ -1,11 +1,21 @@
-import React, { useState } from 'react';
-import { ArrowRightLeft, Sparkles, Send, ExternalLink, ShieldAlert } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { ArrowRightLeft, Sparkles, Send, Play, ExternalLink, ShieldAlert } from 'lucide-react';
 import { DataTable, Column } from '../components/DataTable';
 import { Badge } from '../components/Badge';
 import { DomainCell } from '../components/DomainCell';
 import { Button } from '../components/Button';
-import { mockCompetitorGaps } from '../data/mockData';
-import type { CompetitorGapItem } from '../data/mockData';
+import { useAudit } from '../context/AuditContext';
+
+export interface GapRow {
+  id: string;
+  domain: string;
+  url: string;
+  competitorCited: string;
+  topic: string;
+  citationScore: number;
+  opportunityType: string;
+  estTraffic: string;
+}
 
 export interface CompetitorGapsPageProps {
   onNavigateToOutreach: () => void;
@@ -14,14 +24,83 @@ export interface CompetitorGapsPageProps {
 export const CompetitorGapsPage: React.FC<CompetitorGapsPageProps> = ({
   onNavigateToOutreach,
 }) => {
+  const { auditResult, clientName, competitors, runAudit, generatePitches, isLoading } = useAudit();
   const [selectedCompetitor, setSelectedCompetitor] = useState<string>('All');
 
-  const filteredGaps = mockCompetitorGaps.filter((g) => {
-    if (selectedCompetitor !== 'All' && g.competitorCited !== selectedCompetitor) return false;
+  // Parse competitors list
+  const competitorNames = useMemo(() => {
+    return competitors
+      .split('\n')
+      .map((l) => l.split('|')[0].trim())
+      .filter(Boolean);
+  }, [competitors]);
+
+  // Construct real gaps from auditResult
+  const activeGaps: GapRow[] = useMemo(() => {
+    if (!auditResult) return [];
+
+    const gaps: GapRow[] = [];
+
+    // 1. From explicit competitor_gaps in auditResult
+    if (auditResult.competitor_gaps && auditResult.competitor_gaps.length) {
+      auditResult.competitor_gaps.forEach((g, idx) => {
+        const comp = g.winning_competitors?.join(', ') || 'Competitor';
+        const src = g.cited_sources?.[0] || 'authority-source.com';
+        const domain = src.replace(/^https?:\/\//, '').split('/')[0];
+        gaps.push({
+          id: `gap-${idx}-${domain}`,
+          domain: domain,
+          url: src.startsWith('http') ? src : `https://${src}`,
+          competitorCited: comp,
+          topic: g.prompt,
+          citationScore: 85,
+          opportunityType: g.prompt.toLowerCase().includes('best') ? 'List Inclusion' : 'Editorial Comparison',
+          estTraffic: 'Top Cited',
+        });
+      });
+    }
+
+    // 2. From table records where cited_where_competitor_wins > 0 or competitor_gap_pages > 0
+    if (auditResult.table && auditResult.table.length) {
+      auditResult.table.forEach((item, idx) => {
+        if (item.cited_where_competitor_wins > 0 || item.competitor_gap_pages > 0) {
+          const firstUrl = item.top_urls?.split('\n')[0] || `https://${item.domain}`;
+          const compName = competitorNames[idx % competitorNames.length] || 'Industry Competitor';
+          // Avoid duplicate domain in gaps
+          if (!gaps.some((g) => g.domain === item.domain)) {
+            gaps.push({
+              id: `gap-table-${idx}-${item.domain}`,
+              domain: item.domain,
+              url: firstUrl,
+              competitorCited: compName,
+              topic: item.action || `High-value recommendation query`,
+              citationScore: item.priority_score || 80,
+              opportunityType: item.best_pitch_type || 'Resource Link / Inclusion',
+              estTraffic: `${item.citations} Cites`,
+            });
+          }
+        }
+      });
+    }
+
+    return gaps;
+  }, [auditResult, competitorNames]);
+
+  const filteredGaps = activeGaps.filter((g) => {
+    if (selectedCompetitor !== 'All' && !g.competitorCited.toLowerCase().includes(selectedCompetitor.toLowerCase())) {
+      return false;
+    }
     return true;
   });
 
-  const columns: Column<CompetitorGapItem>[] = [
+  const handleDraftAllPitches = () => {
+    if (auditResult?.table) {
+      generatePitches(auditResult.table.slice(0, 10));
+    }
+    onNavigateToOutreach();
+  };
+
+  const columns: Column<GapRow>[] = [
     {
       key: 'domain',
       header: 'Authority Domain',
@@ -30,7 +109,7 @@ export const CompetitorGapsPage: React.FC<CompetitorGapsPageProps> = ({
     },
     {
       key: 'competitorCited',
-      header: 'Competitor Cited',
+      header: 'Competitor Mentioned',
       sortable: true,
       render: (item) => (
         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 radius-badge bg-danger/10 text-danger border border-danger/20 text-xs font-semibold">
@@ -40,14 +119,14 @@ export const CompetitorGapsPage: React.FC<CompetitorGapsPageProps> = ({
     },
     {
       key: 'topic',
-      header: 'Citation Topic / Context',
+      header: 'Citation Query / Context',
       render: (item) => (
-        <span className="text-xs text-app-text font-medium">{item.topic}</span>
+        <span className="text-xs text-app-text font-medium line-clamp-2">{item.topic}</span>
       ),
     },
     {
       key: 'citationScore',
-      header: 'Citation Score',
+      header: 'Priority Score',
       sortable: true,
       align: 'right',
       render: (item) => (
@@ -58,28 +137,19 @@ export const CompetitorGapsPage: React.FC<CompetitorGapsPageProps> = ({
     },
     {
       key: 'opportunityType',
-      header: 'Opportunity Pitch',
+      header: 'Opportunity Pitch Angle',
       render: (item) => (
         <Badge
           variant={
-            item.opportunityType === 'List Inclusion'
+            item.opportunityType.includes('List')
               ? 'quick-win'
-              : item.opportunityType === 'Editorial Comparison'
+              : item.opportunityType.includes('Editorial')
               ? 'high-priority'
               : 'editorial'
           }
         >
           {item.opportunityType}
         </Badge>
-      ),
-    },
-    {
-      key: 'estTraffic',
-      header: 'Est. Traffic',
-      sortable: true,
-      align: 'right',
-      render: (item) => (
-        <span className="font-mono text-app-text-2 tabular-nums">{item.estTraffic}</span>
       ),
     },
     {
@@ -92,6 +162,10 @@ export const CompetitorGapsPage: React.FC<CompetitorGapsPageProps> = ({
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
+            if (auditResult) {
+              const tableMatch = auditResult.table.find((t) => t.domain === item.domain);
+              if (tableMatch) generatePitches([tableMatch]);
+            }
             onNavigateToOutreach();
           }}
           icon={<Send className="w-3 h-3" />}
@@ -114,7 +188,7 @@ export const CompetitorGapsPage: React.FC<CompetitorGapsPageProps> = ({
             <h1 className="font-h1 text-app-text">Competitor Citation Gaps</h1>
           </div>
           <p className="text-xs text-app-text-2">
-            Exact URLs citing competitors where Digital4Local is currently missing.
+            Exact URLs citing competitors where <strong>{clientName}</strong> is currently missing.
           </p>
         </div>
 
@@ -126,51 +200,76 @@ export const CompetitorGapsPage: React.FC<CompetitorGapsPageProps> = ({
             onChange={(e) => setSelectedCompetitor(e.target.value)}
             className="h-9 px-3 bg-app-surface-2 border border-app-border radius-input text-xs text-app-text focus:outline-none focus:border-brand"
           >
-            <option value="All">All Competitors (34 Gaps)</option>
-            <option value="FatJoe">FatJoe</option>
-            <option value="Siege Media">Siege Media</option>
-            <option value="Page One Power">Page One Power</option>
-            <option value="The HOTH">The HOTH</option>
+            <option value="All">All Competitors ({activeGaps.length} Gaps)</option>
+            {competitorNames.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
           </select>
         </div>
       </div>
 
-      {/* KPI Highlight Card */}
-      <div className="p-4 bg-brand/5 border border-brand/20 radius-card flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-brand/15 text-brand flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4" />
+      {/* If No Audit Run Yet */}
+      {activeGaps.length === 0 ? (
+        <div className="bg-app-surface border border-app-border radius-card p-8 md:p-12 text-center space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-warning/15 text-warning flex items-center justify-center mx-auto">
+            <ArrowRightLeft className="w-6 h-6" />
           </div>
-          <div>
-            <strong className="text-app-text block font-semibold">
-              34 High-Intent Citation Opportunities Detected
-            </strong>
-            <span className="text-app-text-2">
-              Closing these top 5 competitor gaps can increase AI Share of Voice by +18.4%.
-            </span>
+          <div className="max-w-md mx-auto space-y-1">
+            <h3 className="font-h2 text-app-text">No Competitor Gaps Scanned Yet</h3>
+            <p className="text-xs text-app-text-2">
+              Run the citation prospector for <strong>{clientName}</strong> to cross-reference which publishers are recommending your competitors instead.
+            </p>
           </div>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={runAudit}
+            isLoading={isLoading}
+            icon={<Play className="w-4 h-4" />}
+          >
+            Run Citation Audit Now
+          </Button>
         </div>
+      ) : (
+        <>
+          {/* KPI Highlight Card */}
+          <div className="p-4 bg-brand/5 border border-brand/20 radius-card flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-brand/15 text-brand flex items-center justify-center shrink-0">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <strong className="text-app-text block font-semibold">
+                  {activeGaps.length} High-Intent Citation Opportunities Detected
+                </strong>
+                <span className="text-app-text-2">
+                  Acquiring citations on these publisher URLs will directly contest competitor visibility in LLM queries.
+                </span>
+              </div>
+            </div>
 
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={onNavigateToOutreach}
-          icon={<Send className="w-3.5 h-3.5" />}
-        >
-          Draft All 34 Pitches
-        </Button>
-      </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleDraftAllPitches}
+              icon={<Send className="w-3.5 h-3.5" />}
+            >
+              Draft All Pitches
+            </Button>
+          </div>
 
-      {/* Main Table */}
-      <DataTable
-        title="Active Competitor Gaps"
-        data={filteredGaps}
-        columns={columns}
-        keyExtractor={(item) => item.id}
-        onBulkAction={(action, ids) => {
-          onNavigateToOutreach();
-        }}
-      />
+          {/* Main Table */}
+          <DataTable
+            title={`Active Competitor Gaps (${filteredGaps.length})`}
+            data={filteredGaps}
+            columns={columns}
+            keyExtractor={(item) => item.id}
+            onBulkAction={() => handleDraftAllPitches()}
+          />
+        </>
+      )}
     </div>
   );
 };

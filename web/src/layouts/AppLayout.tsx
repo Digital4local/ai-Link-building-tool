@@ -22,6 +22,7 @@ import { Button } from '../components/Button';
 import { CommandPalette } from '../components/CommandPalette';
 import { ToastContainer } from '../components/Toast';
 import type { ToastMessage } from '../components/Toast';
+import { useAudit } from '../context/AuditContext';
 
 export interface AppLayoutProps {
   children: React.ReactNode;
@@ -46,6 +47,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onStartNewRun,
   isTrackingLive = false,
 }) => {
+  const { clientName, clientDomain, markets, auditResult } = useAudit();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -141,16 +143,21 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           {/* Project Switcher */}
           {!isCollapsed && (
             <div className="p-3 border-b border-app-border">
-              <div className="p-2 radius-input bg-app-surface-2 border border-app-border hover:border-app-border-strong flex items-center justify-between cursor-pointer transition-colors group">
+              <div
+                onClick={() => onNavigate('/overview')}
+                className="p-2 radius-input bg-app-surface-2 border border-app-border hover:border-app-border-strong flex items-center justify-between cursor-pointer transition-colors group"
+              >
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="w-5 h-5 rounded bg-brand/15 text-brand flex items-center justify-center font-bold text-xs">
-                    D
+                    {(clientName || 'D').charAt(0).toUpperCase()}
                   </div>
                   <div className="truncate">
                     <div className="text-xs font-semibold text-app-text truncate">
-                      Digital4Local Agency
+                      {clientName || 'Digital4Local'}
                     </div>
-                    <div className="text-[10px] text-app-text-3">UK & Global GEO Grid</div>
+                    <div className="text-[10px] text-app-text-3 truncate">
+                      {clientDomain || markets.join(', ') || 'UK & Global GEO Grid'}
+                    </div>
                   </div>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-app-text-3 group-hover:text-app-text shrink-0" />
@@ -202,14 +209,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           {!isCollapsed && (
             <div className="p-2.5 bg-app-surface-2 radius-input border border-app-border space-y-1.5">
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-app-text-3">AI Quota (Monthly)</span>
-                <span className="font-semibold text-app-text tabular-nums">48 / 1,500</span>
+                <span className="text-app-text-3">AI Engine Status</span>
+                <span className="font-semibold text-app-text tabular-nums">
+                  {auditResult ? `${auditResult.summary.unique_domains} Domains` : 'BYOK Free Tier'}
+                </span>
               </div>
               <div className="w-full h-1.5 bg-app-surface-3 rounded-full overflow-hidden">
-                <div className="h-full bg-brand-accent rounded-full w-[3.2%]" />
+                <div className={`h-full ${auditResult ? 'bg-success' : 'bg-brand-accent'} rounded-full w-full`} />
               </div>
               <span className="text-[10px] text-brand-accent font-medium block">
-                Free Tier Active (BYOK)
+                {auditResult ? 'Audit Complete & Ready' : 'Gemini 3.1 Flash-Lite BYOK'}
               </span>
             </div>
           )}
@@ -227,8 +236,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             </div>
             {!isCollapsed && (
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-semibold text-app-text truncate">Agency Lead</div>
-                <div className="text-[10px] text-app-text-3 truncate">contact@digital4local.com</div>
+                <div className="text-xs font-semibold text-app-text truncate">{clientName || 'Agency Lead'}</div>
+                <div className="text-[10px] text-app-text-3 truncate">{clientDomain || 'digital4local.com'}</div>
               </div>
             )}
           </div>
@@ -245,7 +254,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center gap-2 text-xs text-app-text-3 truncate">
               <span className="hover:text-app-text cursor-pointer" onClick={() => onNavigate('/overview')}>
-                Digital4Local
+                {clientName || 'Digital4Local'}
               </span>
               <span>/</span>
               <span className="font-semibold text-app-text capitalize">
@@ -259,16 +268,28 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 'hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 radius-pill text-xs font-medium border select-none',
                 isTrackingLive
                   ? 'bg-success/12 text-success border-success/30'
+                  : auditResult
+                  ? 'bg-brand/12 text-brand border-brand/30'
                   : 'bg-app-surface-2 text-app-text-2 border-app-border'
               )}
             >
               <span
                 className={clsx(
                   'w-1.5 h-1.5 rounded-full shrink-0',
-                  isTrackingLive ? 'bg-success pulse-dot' : 'bg-brand-accent'
+                  isTrackingLive
+                    ? 'bg-success pulse-dot'
+                    : auditResult
+                    ? 'bg-brand'
+                    : 'bg-brand-accent'
                 )}
               />
-              <span>{isTrackingLive ? 'Tracking live' : 'Last run 2h ago'}</span>
+              <span>
+                {isTrackingLive
+                  ? 'Tracking live...'
+                  : auditResult
+                  ? `${auditResult.summary.unique_domains} cited domains`
+                  : 'Ready'}
+              </span>
             </div>
           </div>
 
