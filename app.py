@@ -866,23 +866,22 @@ def main():
         )
         
         model_options = [
-            "gemini-3.1-flash-lite (Fast & Reliable)",
-            "gemini-3.8-flash (Recommended)",
-            "gemini-3.7-flash",
-            "gemini-3.5-flash-lite",
-            "gemini-flash-latest",
-            "gemini-2.5-flash (Legacy)",
+            "gemini-2.5-flash (Recommended · Real Search Grounding)",
+            "gemini-2.0-flash (Fast Free Tier)",
+            "gemini-1.5-flash (Standard)",
+            "gemini-2.5-pro (Deep Reasoning)",
+            "gemini-1.5-pro (Extended Context)",
             "Custom Model..."
         ]
         chosen_option = st.selectbox(
             "Gemini Model",
             options=model_options,
             index=0,
-            help="Google AI Studio recommends gemini-3.1-flash-lite or gemini-3.8-flash."
+            help="Google AI Studio recommends gemini-2.5-flash for real-time Google Search Grounding."
         )
         
         if chosen_option == "Custom Model...":
-            model_name = st.text_input("Custom Model Name", value="gemini-3.1-flash-lite")
+            model_name = st.text_input("Custom Model Name", value="gemini-2.5-flash")
         else:
             model_name = chosen_option.split(" ")[0]
 
@@ -1206,14 +1205,14 @@ def main():
     gen_col1, gen_col2 = st.columns([1, 3])
     with gen_col1:
         if st.button("✨ Generate Prompts", use_container_width=True):
-            if not api_key:
+            if not effective_key:
                 st.warning("⚠️ No API key found. Generating fallback template prompts.")
             with st.spinner("Asking Gemini to generate high-intent buyer questions..."):
                 generated = generate_prompts_gemini(
                     service=service,
                     location=markets_list[0],
                     n=num_prompts,
-                    api_key=api_key,
+                    api_key=effective_key,
                     model=model_name,
                     delay_sec=delay_sec
                 )
@@ -1236,18 +1235,24 @@ def main():
     # ------------------------------------------------------------------------
     # Execution Button
     # ------------------------------------------------------------------------
+    effective_key = (active_api_key or api_key or os.getenv("GEMINI_API_KEY", "")).strip()
+
     st.write("")
     run_btn = st.button(
         "🚀 Run Gemini Citation Prospector",
         type="primary",
-        disabled=not (prompts_list and api_key),
+        disabled=not prompts_list,
         use_container_width=True
     )
 
-    if not api_key:
-        st.info("💡 Please enter your Gemini API Key in the sidebar to start.")
+    if not effective_key:
+        st.info("💡 Please paste your Free Google Gemini API Key in Step 0 above to start the live audit.")
 
     if run_btn:
+        if not effective_key:
+            st.error("⚠️ Please enter your Free Google Gemini API Key in Step 0 above before running the audit.")
+            st.stop()
+
         progress_bar = st.progress(0.0)
         status_text = st.empty()
 
@@ -1256,7 +1261,7 @@ def main():
             prompts=prompts_list,
             markets=markets_list,
             repeats=repeats,
-            api_key=api_key,
+            api_key=effective_key,
             model=model_name,
             delay_sec=delay_sec,
             progress_bar=progress_bar,

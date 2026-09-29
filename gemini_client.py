@@ -76,12 +76,20 @@ def update_last_call_timestamp():
 
 
 def normalize_model_name(model: str) -> str:
-    """Normalize model string and handle deprecated endpoints."""
-    clean = (model or "gemini-3.1-flash-lite").strip().replace("models/", "")
-    # Map deprecated models to active equivalents
-    if clean in ("gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.0-pro"):
-        return "gemini-3.1-flash-lite"
-    return clean
+    """Normalize model string and map to active official Google Gemini endpoints."""
+    clean = (model or "gemini-2.5-flash").strip().replace("models/", "")
+    clean_lower = clean.lower()
+    if "flash" in clean_lower:
+        if "2.0" in clean_lower:
+            return "gemini-2.0-flash"
+        if "1.5" in clean_lower:
+            return "gemini-1.5-flash"
+        return "gemini-2.5-flash"
+    elif "pro" in clean_lower:
+        if "2.5" in clean_lower:
+            return "gemini-2.5-pro"
+        return "gemini-1.5-pro"
+    return "gemini-2.5-flash"
 
 
 def parse_json(text: str):
@@ -195,9 +203,9 @@ def gemini_generate(
     active_model = normalize_model_name(model)
     backoff_schedule = [20.0, 40.0, 60.0]
 
-    # Model candidates for automatic fallback if 404 or unsupported
+    # Model candidates for automatic fallback
     model_candidates = [active_model]
-    for m in ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-flash-lite-latest"]:
+    for m in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-pro", "gemini-1.5-pro"]:
         if m not in model_candidates:
             model_candidates.append(m)
 
@@ -220,7 +228,8 @@ def gemini_generate(
         payload["generationConfig"]["responseMimeType"] = "application/json"
 
     if use_search:
-        payload["tools"] = [{"google_search": {}}]
+        # Standard Google Search tool format in Gemini v1beta
+        payload["tools"] = [{"googleSearch": {}}]
 
     if system_instruction:
         payload["systemInstruction"] = {
