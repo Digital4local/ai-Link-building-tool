@@ -6,299 +6,745 @@ import {
   ExternalLink,
   Send,
   Sparkles,
+  Key,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  FileSpreadsheet,
+  FileCode,
+  Layers,
+  Copy,
+  Check,
+  Building,
+  Globe,
+  MapPin,
+  Users
 } from 'lucide-react';
 import { RadialGauge } from '../components/RadialGauge';
 import { MetricCard } from '../components/MetricCard';
-import { SankeyCitationFlow } from '../components/SankeyCitationFlow';
-import { PromptCoverageGrid } from '../components/PromptCoverageGrid';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
-import { SideSheet } from '../components/SideSheet';
-import {
-  sovTrendData,
-  nextBestActions,
-  mockSources,
-  mockPrompts,
-} from '../data/mockData';
-import type { DomainTarget, CoverageGridCell } from '../types';
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  Legend,
-} from 'recharts';
+import { useAudit } from '../context/AuditContext';
+import type { AuditTableItem } from '../services/api';
 
 export interface OverviewPageProps {
   onNavigate: (route: string) => void;
   onStartRun: () => void;
 }
 
-export const OverviewPage: React.FC<OverviewPageProps> = ({
-  onNavigate,
-  onStartRun,
-}) => {
-  const [selectedSheetTarget, setSelectedSheetTarget] = useState<DomainTarget | null>(null);
+export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
+  const {
+    apiKey,
+    setApiKey,
+    clientName,
+    setClientName,
+    clientDomain,
+    setClientDomain,
+    service,
+    setService,
+    locationInput,
+    setLocationInput,
+    markets,
+    competitors,
+    setCompetitors,
+    prompts,
+    setPrompts,
+    model,
+    setModel,
+    auditResult,
+    pitches,
+    contentBrief,
+    isLoading,
+    statusMessage,
+    error,
+    isKeyVerified,
+    verifyApiKey,
+    generatePrompts,
+    runAudit,
+    generatePitches,
+    generateBrief,
+    downloadExcelReport,
+    downloadHtmlReport,
+  } = useAudit();
 
-  // Transform mock prompts to coverage grid format
-  const coverageData: CoverageGridCell[] = mockPrompts.map((p) => ({
-    prompt: p.query,
-    category: p.category,
-    engines: {
-      Gemini: { rank: p.clientRank, sentiment: 'positive' },
-      ChatGPT: { rank: p.clientRank === 1 ? 1 : 2, sentiment: 'positive' },
-      Perplexity: { rank: p.clientRank ? p.clientRank + 1 : null, sentiment: 'neutral' },
-      Claude: { rank: p.clientRank === 1 ? 2 : null, sentiment: null },
-    },
-  }));
+  const [selectedDomains, setSelectedDomains] = useState<Record<string, boolean>>({});
+  const [activeTab, setActiveTab] = useState<'targets' | 'gaps' | 'pitches' | 'brief'>('targets');
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  const tableData = auditResult?.table || [];
+  const sovData = auditResult?.share_of_voice || [];
+  const gapsData = auditResult?.competitor_gaps || [];
+
+  const selectedCount = Object.values(selectedDomains).filter(Boolean).length;
+
+  const handleSelectAll = (checked: boolean) => {
+    const updated: Record<string, boolean> = {};
+    if (checked) {
+      tableData.slice(0, 10).forEach((t) => {
+        updated[t.domain] = true;
+      });
+    }
+    setSelectedDomains(updated);
+  };
+
+  const handleToggleDomain = (domain: string) => {
+    setSelectedDomains((prev) => ({
+      ...prev,
+      [domain]: !prev[domain],
+    }));
+  };
+
+  const handleGeneratePitchesForSelected = async () => {
+    const targetsToPitch = tableData.filter((t) => selectedDomains[t.domain]);
+    if (targetsToPitch.length) {
+      await generatePitches(targetsToPitch);
+      setActiveTab('pitches');
+    }
+  };
+
+  const handleCopyText = (text: string, idx: number) => {
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(idx);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  // Visibility score calculation
+  const visibilityScore = auditResult
+    ? Math.min(100, Math.round(auditResult.summary.client_sov_pct * 1.5 + (tableData.length ? 30 : 0)))
+    : 72;
+
+  const clientSov = auditResult ? auditResult.summary.client_sov_pct : 38.5;
+  const uniqueDomainsCount = auditResult ? auditResult.summary.unique_domains : 18;
+  const outreachTargetsCount = auditResult ? auditResult.summary.outreach_targets : 12;
+  const gapsCount = gapsData.length;
 
   return (
-    <div className="space-y-8 animate-fadeIn">
-      {/* Top BYOK & Business Campaign Banner */}
-      <div className="p-4 md:p-5 bg-gradient-to-r from-brand/12 via-app-surface to-brand-accent/10 border border-brand/25 radius-card flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 radius-pill bg-brand-accent/20 text-brand-accent border border-brand-accent/30 text-[11px] font-bold">
-              100% FREE · BYOK ACTIVE
-            </span>
-            <span className="text-xs text-app-text-3 font-mono">
-              Campaign: <strong className="text-app-text">Digital4Local</strong> (digital4local.com)
-            </span>
+    <div className="space-y-8 animate-fadeIn max-w-7xl mx-auto pb-16">
+      {/* ------------------------------------------------------------- */}
+      {/* STEP 0: FREE GOOGLE GEMINI API KEY (BYOK) BANNER              */}
+      {/* ------------------------------------------------------------- */}
+      <div className="p-5 md:p-6 bg-gradient-to-r from-brand/15 via-app-surface to-brand-accent/10 border border-brand/35 radius-card shadow-lg">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 radius-pill bg-brand-accent/20 text-brand-accent border border-brand-accent/40 text-[11px] font-bold uppercase tracking-wider">
+                100% Free · No Card Required
+              </span>
+              <span className="text-xs text-app-text-3 font-mono">
+                Model: <strong>{model}</strong>
+              </span>
+            </div>
+            <h2 className="text-lg md:text-xl font-bold text-app-text flex items-center gap-2">
+              <Key className="w-5 h-5 text-brand" />
+              Step 0: Free Google Gemini API Key
+            </h2>
+            <p className="text-xs md:text-sm text-app-text-2 max-w-2xl">
+              Queries run directly against your Google AI Studio free tier quota. Your key is stored securely in this session only.
+            </p>
           </div>
-          <h2 className="text-sm md:text-base font-bold text-app-text">
-            Reverse-Engineer Google Gemini & ChatGPT Citations
-          </h2>
-          <p className="text-xs text-app-text-2">
-            Enter your free Google Gemini API Key and business details to prospect high-authority citation targets.
-          </p>
+
+          <a
+            href="https://aistudio.google.com/app/apikey"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 radius-btn bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-md transition-all shrink-0 self-start lg:self-center"
+          >
+            Get Free API Key in 30s <ExternalLink className="w-3.5 h-3.5" />
+          </a>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => onNavigate('/onboarding')}
-            icon={<Sparkles className="w-3.5 h-3.5 text-brand" />}
-          >
-            Edit Business Details
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={onStartRun}
-            icon={<Send className="w-3.5 h-3.5" />}
-          >
-            Run New AI Audit
-          </Button>
+        <div className="mt-4 pt-4 border-t border-app-border/40 grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+          <div className="md:col-span-8">
+            <div className="relative">
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="AIzaSy... or AQ... (Paste your free Google Gemini API Key here)"
+                className="w-full pl-3 pr-24 py-2 bg-app-bg/80 border border-app-border focus:border-brand radius-btn text-xs font-mono text-app-text outline-none"
+              />
+              <span className="absolute right-3 top-2.5 text-[10px] text-app-text-3 font-mono uppercase">
+                {apiKey ? 'Key Loaded' : 'No Key'}
+              </span>
+            </div>
+          </div>
+
+          <div className="md:col-span-4 flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => verifyApiKey()}
+              disabled={isLoading || !apiKey}
+              icon={<ShieldCheck className="w-4 h-4 text-brand-accent" />}
+              className="w-full justify-center"
+            >
+              Verify Key
+            </Button>
+            {isKeyVerified && (
+              <span className="text-brand-accent text-xs font-semibold flex items-center gap-1 shrink-0">
+                <CheckCircle2 className="w-4 h-4" /> Active
+              </span>
+            )}
+          </div>
         </div>
       </div>
+
       {/* ------------------------------------------------------------- */}
-      {/* ROW 1: RADIAL GAUGE (0-100) + 3 METRIC CARDS                  */}
+      {/* CAMPAIGN PROFILE & BUYER-INTENT PROMPTS INPUT CARD            */}
+      {/* ------------------------------------------------------------- */}
+      <div className="p-6 bg-app-surface border border-app-border radius-card space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-app-border pb-4">
+          <div>
+            <h3 className="text-base font-bold text-app-text flex items-center gap-2">
+              <Building className="w-4 h-4 text-brand" />
+              1. Business Profile & Multi-Market Scope
+            </h3>
+            <p className="text-xs text-app-text-2">
+              Configure your brand, service niche, target geographic regions, and benchmark competitors.
+            </p>
+          </div>
+          <Badge variant="brand">
+            Multi-Market Active ({markets.length} Markets)
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-app-text-2 mb-1">
+              Your Business / Client Name
+            </label>
+            <input
+              type="text"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              className="w-full px-3 py-2 bg-app-bg border border-app-border radius-btn text-xs font-medium text-app-text outline-none focus:border-brand"
+              placeholder="e.g. Digital4Local"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-app-text-2 mb-1">
+              Your Business Domain
+            </label>
+            <input
+              type="text"
+              value={clientDomain}
+              onChange={(e) => setClientDomain(e.target.value)}
+              className="w-full px-3 py-2 bg-app-bg border border-app-border radius-btn text-xs font-mono text-app-text outline-none focus:border-brand"
+              placeholder="e.g. digital4local.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-app-text-2 mb-1">
+              Service / Niche (Plural)
+            </label>
+            <input
+              type="text"
+              value={service}
+              onChange={(e) => setService(e.target.value)}
+              className="w-full px-3 py-2 bg-app-bg border border-app-border radius-btn text-xs font-medium text-app-text outline-none focus:border-brand"
+              placeholder="e.g. AI growth and local SEO agencies"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-app-text-2 mb-1">
+              Target Markets (comma-separated)
+            </label>
+            <input
+              type="text"
+              value={locationInput}
+              onChange={(e) => setLocationInput(e.target.value)}
+              className="w-full px-3 py-2 bg-app-bg border border-app-border radius-btn text-xs font-medium text-app-text outline-none focus:border-brand"
+              placeholder="e.g. the UK, the US"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-app-text-2 mb-1">
+              Competitors to Audit (Brand | domain per line)
+            </label>
+            <textarea
+              rows={3}
+              value={competitors}
+              onChange={(e) => setCompetitors(e.target.value)}
+              className="w-full px-3 py-2 bg-app-bg border border-app-border radius-btn text-xs font-mono text-app-text outline-none focus:border-brand resize-none"
+              placeholder="FatJoe | fatjoe.com&#10;Siege Media | siegemedia.com"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-semibold text-app-text-2">
+                Buyer-Intent Prompts ({prompts.length} Prompts)
+              </label>
+              <button
+                type="button"
+                onClick={generatePrompts}
+                disabled={isLoading}
+                className="text-[11px] text-brand hover:text-brand-hover font-semibold flex items-center gap-1 cursor-pointer"
+              >
+                <Sparkles className="w-3 h-3" /> Auto-Generate Prompts
+              </button>
+            </div>
+            <textarea
+              rows={3}
+              value={prompts.join('\n')}
+              onChange={(e) => setPrompts(e.target.value.split('\n').filter((p) => p.trim()))}
+              className="w-full px-3 py-2 bg-app-bg border border-app-border radius-btn text-xs font-medium text-app-text outline-none focus:border-brand resize-none"
+              placeholder="What are the best AI growth agencies in the UK?"
+            />
+          </div>
+        </div>
+
+        {/* Live Status & Run Button */}
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            {isLoading && (
+              <span className="w-3 h-3 rounded-full bg-brand-accent animate-ping" />
+            )}
+            <span className="text-xs font-medium text-app-text-2">
+              {statusMessage || (auditResult ? '✅ Ready for next audit run' : 'Ready to prospect')}
+            </span>
+          </div>
+
+          <Button
+            variant="primary"
+            size="md"
+            onClick={runAudit}
+            disabled={isLoading || !apiKey.trim()}
+            icon={<Send className="w-4 h-4" />}
+            className="w-full sm:w-auto px-8"
+          >
+            {isLoading ? 'Running Audit Queries...' : '🚀 Run Gemini Citation Prospector'}
+          </Button>
+        </div>
+
+        {error && (
+          <div className="p-3 bg-rose-500/10 border border-rose-500/30 radius-btn flex items-center gap-2 text-xs text-rose-400 font-medium">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            {error}
+          </div>
+        )}
+      </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* SUMMARY METRICS & RADIAL GAUGE                                */}
       {/* ------------------------------------------------------------- */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Radial Score Gauge (4 cols on lg) */}
         <div className="lg:col-span-4 flex flex-col">
           <RadialGauge
-            score={86}
-            shareOfVoice={48.2}
+            score={visibilityScore}
+            shareOfVoice={clientSov}
             avgPosition={1.4}
-            citationShare={72.5}
+            citationShare={Math.round((outreachTargetsCount / Math.max(uniqueDomainsCount, 1)) * 100)}
             className="h-full"
           />
         </div>
 
-        {/* 3 Metric Cards (8 cols on lg) */}
         <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <MetricCard
-            label="Share of Voice"
-            value="48.2"
+            label="Client Share of Voice"
+            value={clientSov.toString()}
             suffix="%"
             delta={12.4}
-            deltaLabel="vs last run"
-            tooltip="Percentage of tracked buyer queries where Digital4Local is cited as a top recommendation."
-            sparklineData={[31, 37.5, 42, 48.2]}
+            deltaLabel="mentions in answers"
+            tooltip={`${clientName} cited across AI answers`}
+            variant="success"
           />
-
           <MetricCard
-            label="Active Authority Targets"
-            value="142"
-            delta={8.0}
-            deltaLabel="vs previous run"
-            tooltip="High-authority publishing domains citing competitors where Digital4Local can build links."
-            sparklineData={[98, 114, 128, 142]}
+            label="Unique Cited Domains"
+            value={uniqueDomainsCount.toString()}
+            delta={uniqueDomainsCount}
+            deltaLabel="authentic domains"
+            tooltip="Discovered in Google Gemini queries"
           />
-
           <MetricCard
-            label="Citation Gaps Identified"
-            value="34"
-            delta={-14.2}
-            deltaLabel="closing gap velocity"
-            tooltip="Exact URLs currently missing client citation anchors that competitors occupy."
-            sparklineData={[56, 48, 39, 34]}
+            label="Outreach Targets"
+            value={outreachTargetsCount.toString()}
+            delta={outreachTargetsCount}
+            deltaLabel="high-priority targets"
+            tooltip="Non-competitor pitching opportunities"
+            variant="brand"
           />
         </div>
       </section>
 
       {/* ------------------------------------------------------------- */}
-      {/* ROW 2: HERO SANKEY CITATION FLOW DIAGRAM                      */}
+      {/* AUDIT RESULTS TABS (Link Targets, Competitor Gaps, Pitches)   */}
       {/* ------------------------------------------------------------- */}
-      <section>
-        <SankeyCitationFlow
-          onSelectDomain={(domain) => {
-            const found = mockSources.find((s) => s.domain === domain) || {
-              id: 'custom',
-              domain,
-              citationScore: 88,
-              citationFrequency: 18,
-              market: 'UK / US',
-              category: 'Authority Platform',
-              actionBucket: 'High Priority',
-              status: 'Identified',
-              avgWordCount: 2100,
-              schemaTypes: ['Article'],
-              sampleUrl: `https://${domain}/rankings`,
-              pitchAngle: `Hi Editorial Team,\n\nWe love your insights on ${domain}. Digital4Local has verified benchmark data on AI search citations ready to add.`,
-              competitorsCited: ['FatJoe'],
-            };
-            setSelectedSheetTarget(found);
-          }}
-        />
-      </section>
-
-      {/* ------------------------------------------------------------- */}
-      {/* ROW 3: SOV TREND (LINE CHART) + NEXT BEST ACTIONS             */}
-      {/* ------------------------------------------------------------- */}
-      <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* SOV Trend Chart (7 cols) */}
-        <div className="lg:col-span-7 bg-app-surface border border-app-border radius-card p-6 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-brand/15 text-brand flex items-center justify-center">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                </div>
-                <h3 className="font-h3 text-app-text">Share of Voice Trend Across Runs</h3>
-              </div>
-              <span className="text-xs text-app-text-3 font-mono">Last 4 Runs (Weekly)</span>
-            </div>
-            <p className="text-xs text-app-text-2 mb-4">
-              Tracking visibility trajectory against direct SEO & Link Building competitors.
-            </p>
+      <div className="bg-app-surface border border-app-border radius-card p-6 space-y-6">
+        {/* Navigation Tabs Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-app-border pb-4">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+            <button
+              onClick={() => setActiveTab('targets')}
+              className={`px-3.5 py-1.5 radius-btn text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'targets'
+                  ? 'bg-brand text-white shadow'
+                  : 'text-app-text-2 hover:text-app-text hover:bg-app-bg'
+              }`}
+            >
+              🎯 Prioritised Link Targets ({tableData.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('gaps')}
+              className={`px-3.5 py-1.5 radius-btn text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'gaps'
+                  ? 'bg-brand text-white shadow'
+                  : 'text-app-text-2 hover:text-app-text hover:bg-app-bg'
+              }`}
+            >
+              ⚔️ Competitor Gaps ({gapsCount})
+            </button>
+            <button
+              onClick={() => setActiveTab('pitches')}
+              className={`px-3.5 py-1.5 radius-btn text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'pitches'
+                  ? 'bg-brand text-white shadow'
+                  : 'text-app-text-2 hover:text-app-text hover:bg-app-bg'
+              }`}
+            >
+              ✉️ Outreach Pitches ({pitches.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('brief')}
+              className={`px-3.5 py-1.5 radius-btn text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'brief'
+                  ? 'bg-brand text-white shadow'
+                  : 'text-app-text-2 hover:text-app-text hover:bg-app-bg'
+              }`}
+            >
+              📝 AI Content Brief
+            </button>
           </div>
 
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={sovTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.6} />
-                <XAxis dataKey="date" stroke="var(--text-3)" fontSize={11} tickLine={false} />
-                <YAxis stroke="var(--text-3)" fontSize={11} tickLine={false} unit="%" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'var(--surface-3)',
-                    borderColor: 'var(--border-strong)',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    color: 'var(--text)',
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                <Line
-                  type="monotone"
-                  dataKey="Digital4Local"
-                  stroke="var(--brand)"
-                  strokeWidth={3}
-                  dot={{ fill: 'var(--brand)', r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line type="monotone" dataKey="FatJoe" stroke="#8B5CF6" strokeWidth={1.5} dot={false} />
-                <Line type="monotone" dataKey="SiegeMedia" stroke="#EC4899" strokeWidth={1.5} dot={false} />
-                <Line type="monotone" dataKey="PageOnePower" stroke="#14B8A6" strokeWidth={1.5} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={downloadExcelReport}
+              disabled={!auditResult}
+              icon={<FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />}
+            >
+              Export Excel
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={downloadHtmlReport}
+              disabled={!auditResult}
+              icon={<FileCode className="w-3.5 h-3.5 text-sky-400" />}
+            >
+              Export HTML
+            </Button>
           </div>
         </div>
 
-        {/* Next Best Actions (5 cols) */}
-        <div className="lg:col-span-5 bg-app-surface border border-app-border radius-card p-6 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-1">
+        {/* TAB 1: LINK TARGETS TABLE */}
+        {activeTab === 'targets' && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <p className="text-xs text-app-text-2">
+                Real domains cited by Gemini with calculated priority scores (0-100) and pitch classifications.
+              </p>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-brand-accent/15 text-brand-accent flex items-center justify-center">
-                  <Sparkles className="w-3.5 h-3.5" />
-                </div>
-                <h3 className="font-h3 text-app-text">Next Best Actions</h3>
-              </div>
-              <span className="text-xs px-2 py-0.5 radius-pill bg-brand-accent/10 text-brand-accent border border-brand-accent/20 font-semibold">
-                5 High Impact
-              </span>
-            </div>
-            <p className="text-xs text-app-text-2 mb-4">
-              AI-ranked tactical steps to boost citation frequency and overtake competitor anchors.
-            </p>
-          </div>
-
-          <div className="space-y-2.5">
-            {nextBestActions.map((act) => (
-              <div
-                key={act.id}
-                onClick={() => onNavigate(act.actionUrl)}
-                className="p-3 radius-input bg-app-surface-2 border border-app-border hover:border-app-border-strong transition-colors cursor-pointer group flex items-start justify-between gap-3"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className={`px-1.5 py-0.2 radius-badge text-[10px] font-bold uppercase tracking-wider ${
-                        act.impact === 'Critical'
-                          ? 'bg-danger/15 text-danger border border-danger/30'
-                          : 'bg-brand-accent/15 text-brand-accent border border-brand-accent/30'
-                      }`}
-                    >
-                      {act.impact}
-                    </span>
-                    <span className="text-[11px] text-app-text-3 font-mono">{act.category}</span>
-                  </div>
-                  <h4 className="text-xs font-semibold text-app-text group-hover:text-brand transition-colors truncate">
-                    {act.title}
-                  </h4>
-                </div>
-
                 <Button
-                  variant="ghost"
+                  variant="primary"
                   size="sm"
-                  className="shrink-0 p-1.5 text-app-text-3 group-hover:text-brand"
-                  icon={<ArrowRight className="w-3.5 h-3.5" />}
-                />
+                  onClick={handleGeneratePitchesForSelected}
+                  disabled={selectedCount === 0 || isLoading}
+                  icon={<Sparkles className="w-3.5 h-3.5" />}
+                >
+                  ✍️ Write Pitches for Selected ({selectedCount})
+                </Button>
               </div>
-            ))}
+            </div>
+
+            <div className="overflow-x-auto border border-app-border radius-card">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-app-bg/80 border-b border-app-border text-app-text-3 font-semibold">
+                    <th className="p-3 w-10">
+                      <input
+                        type="checkbox"
+                        checked={selectedCount > 0 && selectedCount === Math.min(10, tableData.length)}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        className="rounded border-app-border text-brand focus:ring-0"
+                      />
+                    </th>
+                    <th className="p-3">Target Domain</th>
+                    <th className="p-3">Priority Score</th>
+                    <th className="p-3">Citations</th>
+                    <th className="p-3">Action Category</th>
+                    <th className="p-3">Pitch Strategy</th>
+                    <th className="p-3">Top Cited URL</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-app-border/40">
+                  {tableData.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-app-text-3">
+                        No audit records yet. Click "Run Gemini Citation Prospector" above to start live discovery!
+                      </td>
+                    </tr>
+                  ) : (
+                    tableData.map((row, idx) => (
+                      <tr
+                        key={idx}
+                        className={`hover:bg-brand/5 transition-colors ${
+                          selectedDomains[row.domain] ? 'bg-brand/10' : ''
+                        }`}
+                      >
+                        <td className="p-3">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(selectedDomains[row.domain])}
+                            onChange={() => handleToggleDomain(row.domain)}
+                            className="rounded border-app-border text-brand focus:ring-0"
+                          />
+                        </td>
+                        <td className="p-3 font-semibold text-app-text font-mono">
+                          {row.domain}
+                        </td>
+                        <td className="p-3">
+                          <span className="px-2 py-0.5 radius-pill bg-brand/15 text-brand font-bold">
+                            {row.priority_score}
+                          </span>
+                        </td>
+                        <td className="p-3 font-medium text-app-text-2">
+                          {row.citations}
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-0.5 radius-pill text-[11px] font-semibold ${
+                              row.action.startsWith('Outreach')
+                                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                                : row.action.startsWith('Directory')
+                                ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
+                                : row.action.startsWith('Community')
+                                ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                                : 'bg-app-bg text-app-text-3'
+                            }`}
+                          >
+                            {row.action}
+                          </span>
+                        </td>
+                        <td className="p-3 text-app-text-2 font-medium">
+                          {row.best_pitch_type}
+                        </td>
+                        <td className="p-3 font-mono text-app-text-3 truncate max-w-xs">
+                          {row.top_urls ? (
+                            <a
+                              href={row.top_urls.split(' | ')[0]}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-brand hover:underline flex items-center gap-1"
+                            >
+                              {row.top_urls.split(' | ')[0]} <ExternalLink className="w-3 h-3 shrink-0" />
+                            </a>
+                          ) : (
+                            '-'
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      </section>
+        )}
 
-      {/* ------------------------------------------------------------- */}
-      {/* ROW 4: PROMPT COVERAGE GEO MATRIX                             */}
-      {/* ------------------------------------------------------------- */}
-      <section>
-        <PromptCoverageGrid
-          data={coverageData}
-          onSelectPrompt={(prompt) => {
-            onNavigate('/prompts');
-          }}
-        />
-      </section>
+        {/* TAB 2: COMPETITOR GAPS */}
+        {activeTab === 'gaps' && (
+          <div className="space-y-4">
+            <p className="text-xs text-app-text-2">
+              Specific buyer questions where competitors were recommended by AI, but <strong>{clientName}</strong> was missing.
+            </p>
 
-      {/* Side Sheet Drawer */}
-      <SideSheet
-        target={selectedSheetTarget}
-        isOpen={Boolean(selectedSheetTarget)}
-        onClose={() => setSelectedSheetTarget(null)}
-        onGeneratePitch={(t) => {
-          setSelectedSheetTarget(null);
-          onNavigate('/outreach');
-        }}
-      />
+            <div className="grid grid-cols-1 gap-3">
+              {gapsData.length === 0 ? (
+                <div className="p-6 text-center text-app-text-3 border border-app-border radius-card">
+                  No competitor gaps detected in current run, or run the audit first!
+                </div>
+              ) : (
+                gapsData.map((gap, idx) => (
+                  <div key={idx} className="p-4 bg-app-bg border border-app-border radius-card space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-app-text">
+                        ❓ "{gap.prompt}"
+                      </span>
+                      <Badge variant="warning">Market: {gap.market}</Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-app-text-2">
+                      <span className="text-rose-400 font-semibold">Winning Competitor(s):</span>
+                      {gap.winning_competitors.map((c, cIdx) => (
+                        <span key={cIdx} className="px-2 py-0.5 bg-rose-500/15 text-rose-300 radius-pill font-medium">
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                    {gap.cited_sources.length > 0 && (
+                      <div className="text-[11px] text-app-text-3 flex items-center gap-2 pt-1 font-mono">
+                        <span>Citations:</span>
+                        {gap.cited_sources.map((s, sIdx) => (
+                          <a key={sIdx} href={s} target="_blank" rel="noreferrer" className="text-brand hover:underline truncate max-w-xs">
+                            {s}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: OUTREACH PITCHES */}
+        {activeTab === 'pitches' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-app-text-2">
+                Personalized email drafts, anchor texts, and context sentences generated for target publishers.
+              </p>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleGeneratePitchesForSelected}
+                disabled={selectedCount === 0 || isLoading}
+              >
+                Write Pitches for Selected ({selectedCount})
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              {pitches.length === 0 ? (
+                <div className="p-8 text-center text-app-text-3 border border-app-border radius-card space-y-2">
+                  <p>No pitches generated yet.</p>
+                  <p className="text-xs">
+                    Select target domains in the Link Targets tab and click "✍️ Write Pitches".
+                  </p>
+                </div>
+              ) : (
+                pitches.map((p, pIdx) => (
+                  <div key={pIdx} className="p-5 bg-app-bg border border-app-border radius-card space-y-3">
+                    <div className="flex items-center justify-between border-b border-app-border pb-2">
+                      <div>
+                        <h4 className="text-sm font-bold text-app-text font-mono">
+                          {p.domain || p.url}
+                        </h4>
+                        <span className="text-[11px] text-brand-accent font-semibold">
+                          Strategy: {p.pitch_type || 'Niche Edit'}
+                        </span>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleCopyText(`Subject: ${p.subject}\n\n${p.email}`, pIdx)}
+                        icon={copiedIndex === pIdx ? <Check className="w-3.5 h-3.5 text-brand-accent" /> : <Copy className="w-3.5 h-3.5" />}
+                      >
+                        {copiedIndex === pIdx ? 'Copied' : 'Copy Pitch'}
+                      </Button>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-xs font-semibold text-app-text-2">Subject:</span>
+                      <p className="text-xs font-medium text-app-text bg-app-surface p-2 radius-btn border border-app-border">
+                        {p.subject}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-xs font-semibold text-app-text-2">Email Body:</span>
+                      <pre className="text-xs text-app-text-2 bg-app-surface p-3 radius-btn border border-app-border whitespace-pre-wrap font-sans">
+                        {p.email}
+                      </pre>
+                    </div>
+
+                    {(p.suggested_anchor || p.suggested_sentence) && (
+                      <div className="p-3 bg-brand/5 border border-brand/20 radius-btn text-xs space-y-1">
+                        {p.suggested_anchor && (
+                          <div>
+                            <strong className="text-brand font-semibold">Suggested Anchor:</strong> {p.suggested_anchor}
+                          </div>
+                        )}
+                        {p.suggested_sentence && (
+                          <div>
+                            <strong className="text-brand font-semibold">Suggested Sentence:</strong> "{p.suggested_sentence}"
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: AI CONTENT BRIEF */}
+        {activeTab === 'brief' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-app-text-2">
+                Editorial structure and 5 linkable asset ideas synthesized from top performing pages.
+              </p>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={generateBrief}
+                disabled={isLoading}
+                icon={<Sparkles className="w-3.5 h-3.5" />}
+              >
+                {contentBrief ? 'Re-build Brief' : 'Generate Content Brief'}
+              </Button>
+            </div>
+
+            {!contentBrief ? (
+              <div className="p-8 text-center text-app-text-3 border border-app-border radius-card space-y-2">
+                <p>No content brief generated for this run yet.</p>
+                <p className="text-xs">Click "Generate Content Brief" to create 5 linkable asset ideas and winning editorial angles.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 bg-app-bg border border-app-border radius-card space-y-2">
+                  <h4 className="text-sm font-bold text-brand">Winning Angles & Structure</h4>
+                  <p className="text-xs text-app-text-2 leading-relaxed">
+                    {contentBrief.editorial_angle || contentBrief.structure_summary || 'Comprehensive guide covering local SEO benchmarks, verified client case studies, and transparent ROI metrics.'}
+                  </p>
+                </div>
+
+                {contentBrief.content_ideas && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-app-text uppercase tracking-wider">
+                      💡 5 High-Authority Linkable Asset Ideas
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {contentBrief.content_ideas.map((idea: any, iIdx: number) => (
+                        <div key={iIdx} className="p-3.5 bg-app-bg border border-app-border radius-card space-y-1">
+                          <span className="text-xs font-bold text-app-text">
+                            {iIdx + 1}. {typeof idea === 'string' ? idea : idea.title || idea.name}
+                          </span>
+                          {idea.description && (
+                            <p className="text-[11px] text-app-text-2">
+                              {idea.description}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

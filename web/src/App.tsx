@@ -12,16 +12,19 @@ import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { DesignSystemPage } from './pages/DesignSystemPage';
 import { RunProgressModal } from './components/RunProgressModal';
+import { AuditProvider, useAudit } from './context/AuditContext';
 import { defaultCampaign } from './data/mockData';
 import type { CampaignProfile } from './data/mockData';
 
-export const App: React.FC = () => {
+const MainAppContent: React.FC = () => {
   const [currentRoute, setCurrentRoute] = useState<string>('/overview');
   const [isDark, setIsDark] = useState<boolean>(true);
   const [activeEngine, setActiveEngine] = useState<string>('All');
   const [isTrackingLive, setIsTrackingLive] = useState<boolean>(false);
   const [isRunModalOpen, setIsRunModalOpen] = useState<boolean>(false);
-  const [campaign, setCampaign] = useState<CampaignProfile>(defaultCampaign);
+  const [, setCampaign] = useState<CampaignProfile>(defaultCampaign);
+
+  const { runAudit, isLoading } = useAudit();
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -48,6 +51,11 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleTriggerAudit = async () => {
+    await runAudit();
+    handleNavigate('/overview');
+  };
+
   // Full-screen standalone routes (Login, Onboarding)
   if (currentRoute === '/login') {
     return (
@@ -63,7 +71,7 @@ export const App: React.FC = () => {
       <OnboardingPage
         onComplete={(newCampaign) => {
           setCampaign(newCampaign);
-          setIsRunModalOpen(true);
+          handleTriggerAudit();
         }}
         onCancel={() => handleNavigate('/overview')}
       />
@@ -78,21 +86,21 @@ export const App: React.FC = () => {
       onToggleTheme={handleToggleTheme}
       activeEngine={activeEngine}
       onSelectEngine={setActiveEngine}
-      isTrackingLive={isTrackingLive}
-      onStartNewRun={() => setIsRunModalOpen(true)}
+      isTrackingLive={isTrackingLive || isLoading}
+      onStartNewRun={handleTriggerAudit}
     >
       {/* Route Views */}
       {currentRoute === '/overview' || currentRoute === '/' ? (
         <OverviewPage
           onNavigate={handleNavigate}
-          onStartRun={() => setIsRunModalOpen(true)}
+          onStartRun={handleTriggerAudit}
         />
       ) : currentRoute === '/sources' ? (
         <SourcesPage onNavigateToOutreach={() => handleNavigate('/outreach')} />
       ) : currentRoute === '/gaps' ? (
         <CompetitorGapsPage onNavigateToOutreach={() => handleNavigate('/outreach')} />
       ) : currentRoute === '/prompts' ? (
-        <PromptsPage onNavigateToAnswers={(prompt) => handleNavigate('/answers')} />
+        <PromptsPage onNavigateToAnswers={() => handleNavigate('/answers')} />
       ) : currentRoute === '/answers' ? (
         <AnswersPage />
       ) : currentRoute === '/outreach' ? (
@@ -106,7 +114,7 @@ export const App: React.FC = () => {
       ) : (
         <OverviewPage
           onNavigate={handleNavigate}
-          onStartRun={() => setIsRunModalOpen(true)}
+          onStartRun={handleTriggerAudit}
         />
       )}
 
@@ -122,6 +130,14 @@ export const App: React.FC = () => {
         }}
       />
     </AppLayout>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <AuditProvider>
+      <MainAppContent />
+    </AuditProvider>
   );
 };
 

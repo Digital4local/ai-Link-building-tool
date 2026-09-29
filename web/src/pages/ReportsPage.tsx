@@ -13,79 +13,33 @@ import { Badge } from '../components/Badge';
 import { DomainCell } from '../components/DomainCell';
 import { defaultCampaign, mockSources, mockCompetitorGaps } from '../data/mockData';
 
+import { useAudit } from '../context/AuditContext';
+
 export const ReportsPage: React.FC = () => {
+  const {
+    clientName,
+    setClientName,
+    auditResult,
+    downloadExcelReport,
+    downloadHtmlReport,
+  } = useAudit();
+
   const [agencyName, setAgencyName] = useState('Digital4Local AI Growth Agency');
-  const [clientName, setClientName] = useState('Digital4Local');
 
   const handleDownloadHTML = () => {
-    const htmlContent = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>AI Citation Intelligence Executive Report - ${clientName}</title>
-  <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0A0C10; color: #E9ECF2; padding: 40px; margin: 0; }
-    .header { border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-    .title { font-size: 24px; font-weight: 800; color: #1B64B5; }
-    .agency { color: #68B82E; font-weight: 600; font-size: 14px; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-    .card { background: #10131A; border: 1px solid rgba(255,255,255,0.08); padding: 20px; border-radius: 10px; }
-    .metric { font-size: 28px; font-weight: 700; color: #22C55E; margin-top: 5px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); text-align: left; font-size: 13px; }
-    th { color: #A0A8B8; text-transform: uppercase; font-size: 11px; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div>
-      <div class="title">AI Citation & Visibility Executive Report</div>
-      <div style="color: #A0A8B8; font-size: 12px; margin-top: 4px;">Client: ${clientName} · 5x5 GEO Grid Analysis</div>
-    </div>
-    <div class="agency">${agencyName}</div>
-  </div>
-  <div class="grid">
-    <div class="card">
-      <div style="font-size: 12px; color: #A0A8B8;">AI Visibility Score</div>
-      <div class="metric">86 / 100</div>
-    </div>
-    <div class="card">
-      <div style="font-size: 12px; color: #A0A8B8;">Share of Voice</div>
-      <div class="metric">48.2%</div>
-    </div>
-    <div class="card">
-      <div style="font-size: 12px; color: #A0A8B8;">Average Rank</div>
-      <div class="metric">#1.4</div>
-    </div>
-  </div>
-  <div class="card">
-    <h3 style="margin-top: 0; color: #1B64B5;">Top Prioritized Link Targets</h3>
-    <table>
-      <tr><th>Domain</th><th>Score</th><th>Frequency</th><th>Action</th></tr>
-      <tr><td>searchengineland.com</td><td>92 / 100</td><td>36 Cites</td><td>High Priority</td></tr>
-      <tr><td>hubspot.com</td><td>89 / 100</td><td>29 Cites</td><td>Quick Win</td></tr>
-      <tr><td>backlinko.com</td><td>86 / 100</td><td>24 Cites</td><td>Editorial Pitch</td></tr>
-    </table>
-  </div>
-</body>
-</html>`;
-
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `client_report_${clientName.toLowerCase().replace(/\s+/g, '_')}.html`;
-    link.click();
+    if (auditResult) {
+      downloadHtmlReport();
+    } else {
+      alert('Please run an audit first to generate report deliverables!');
+    }
   };
 
   const handleDownloadExcel = () => {
-    const csvContent = `Section,Domain,Score,Citations,Status,Topic\nSummary,${clientName},86,48.2%,Active,AI Search Grounding\nTarget,searchengineland.com,92,36,In Discussion,GEO Benchmarks\nTarget,hubspot.com,89,29,Pitched,AI Link Building\nTarget,backlinko.com,86,24,Identified,Digital PR`;
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `client_report_${clientName.toLowerCase().replace(/\s+/g, '_')}.csv`;
-    link.click();
+    if (auditResult) {
+      downloadExcelReport();
+    } else {
+      alert('Please run an audit first to generate report deliverables!');
+    }
   };
 
   return (

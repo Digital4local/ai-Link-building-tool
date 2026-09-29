@@ -8,6 +8,7 @@ export interface CampaignProfile {
   competitors: { name: string; domain: string; color: string }[];
   agencyName: string;
 }
+export const CampaignProfile = {} as any;
 
 export interface RunHistoryItem {
   id: string;
