@@ -77,19 +77,19 @@ def update_last_call_timestamp():
 
 def normalize_model_name(model: str) -> str:
     """Normalize model string and map to active official Google Gemini endpoints."""
-    clean = (model or "gemini-2.5-flash").strip().replace("models/", "")
+    clean = (model or "gemini-3.1-flash-lite").strip().replace("models/", "")
     clean_lower = clean.lower()
-    if "flash" in clean_lower:
-        if "2.0" in clean_lower:
-            return "gemini-2.0-flash"
-        if "1.5" in clean_lower:
-            return "gemini-1.5-flash"
-        return "gemini-2.5-flash"
-    elif "pro" in clean_lower:
-        if "2.5" in clean_lower:
-            return "gemini-2.5-pro"
-        return "gemini-1.5-pro"
-    return "gemini-2.5-flash"
+    if "flash-lite" in clean_lower or "3.1" in clean_lower:
+        return "gemini-3.1-flash-lite"
+    if "3.5" in clean_lower:
+        if "lite" in clean_lower:
+            return "gemini-3.5-flash-lite"
+        return "gemini-3.5-flash"
+    if "3.8" in clean_lower:
+        return "gemini-3.8-flash"
+    if "pro" in clean_lower:
+        return "gemini-3.1-flash-lite"
+    return "gemini-3.1-flash-lite"
 
 
 def parse_json(text: str):
@@ -158,7 +158,7 @@ def gemini_generate(
     Parameters:
     - prompt: The text prompt / user message.
     - api_key: Google AI Studio API key. If empty, reads from os.environ.
-    - model: Gemini model identifier (e.g. 'gemini-3.1-flash-lite', 'gemini-3.8-flash').
+    - model: Gemini model identifier (e.g. 'gemini-3.1-flash-lite', 'gemini-3.5-flash').
     - use_search: Whether to enable Google Search grounding tools.
     - json_mode: If True, enforces application/json responseMimeType and parses JSON.
     - temperature: Sampling temperature (0.0 to 1.0).
@@ -201,11 +201,11 @@ def gemini_generate(
         }
 
     active_model = normalize_model_name(model)
-    backoff_schedule = [20.0, 40.0, 60.0]
+    backoff_schedule = [2.0, 5.0, 10.0]
 
-    # Model candidates for automatic fallback
+    # Model candidates for automatic fallback (active 2026 endpoints)
     model_candidates = [active_model]
-    for m in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-pro", "gemini-1.5-pro"]:
+    for m in ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.8-flash"]:
         if m not in model_candidates:
             model_candidates.append(m)
 
@@ -248,7 +248,7 @@ def gemini_generate(
             start_t = time.time()
             try:
                 increment_session_calls_count()
-                r = requests.post(url, headers=headers, json=payload, timeout=35)
+                r = requests.post(url, headers=headers, json=payload, timeout=30)
                 update_last_call_timestamp()
                 latency_sec = round(time.time() - start_t, 2)
 
@@ -290,20 +290,20 @@ def gemini_generate(
                         "status": "ok"
                     }
 
-                # HTTP 429 Rate Limit / Quota Exhaustion or HTTP 503 Service Unavailable
-                elif r.status_code in (429, 503):
+                # HTTP 503 Service Unavailable / High Demand -> switch to next model immediately
+                elif r.status_code == 503:
+                    last_error = f"Model {candidate_model} is experiencing high demand (503)."
+                    break
+
+                # HTTP 429 Rate Limit / Quota Exhaustion
+                elif r.status_code == 429:
                     err_msg = f"HTTP {r.status_code}: {r.text[:200]}"
                     last_error = err_msg
                     if attempt < max_retries:
                         backoff = backoff_schedule[min(attempt, len(backoff_schedule) - 1)]
-                        msg = f"⚠️ Rate limited ({r.status_code}). Backing off for {int(backoff)}s (Retry {attempt + 1}/{max_retries})..."
+                        msg = f"⚠️ Rate limited. Waiting {int(backoff)}s (Retry {attempt + 1}/{max_retries})..."
                         if status_callback:
                             status_callback(msg)
-                        if st is not None:
-                            try:
-                                st.toast(msg, icon="⏳")
-                            except Exception:
-                                pass
                         time.sleep(backoff)
                         continue
                     else:

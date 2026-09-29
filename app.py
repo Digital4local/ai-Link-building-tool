@@ -273,25 +273,31 @@ def extract_grounding_citations(grounding_meta: dict) -> list[str]:
         uri = (web.get("uri") or "").strip()
         title = (web.get("title") or "").strip()
 
-        found_url = ""
-        if title:
+        target_url = ""
+        # 1. Direct Web URI from Google Search Grounding
+        if uri:
+            if "google.com/url" in uri:
+                try:
+                    parsed_q = parse_qs(urlparse(uri).query)
+                    if "q" in parsed_q and parsed_q["q"]:
+                        target_url = parsed_q["q"][0]
+                except Exception:
+                    pass
+            elif not any(ig in uri.lower() for ig in ["vertexaisearch.cloud.google.com", "google.com/search"]):
+                target_url = uri
+
+        # 2. Extract from Title if URI is a redirect or missing
+        if not target_url and title:
             if "." in title and " " not in title and not title.endswith("."):
-                found_url = "https://" + title if not title.startswith("http") else title
+                target_url = "https://" + title if not title.startswith("http") else title
             else:
-                match = re.search(r'\b([a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?)\b', title)
-                if match:
-                    found_url = "https://" + match.group(1)
+                m = re.search(r'\b([a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?(?:/[^\s]*)?)\b', title)
+                if m:
+                    cand = m.group(1)
+                    target_url = cand if cand.startswith("http") else "https://" + cand
 
-        if not found_url and uri:
-            parsed_host = urlparse(uri).netloc.lower()
-            if "vertexaisearch.cloud.google.com" not in parsed_host and "google.com" not in parsed_host:
-                found_url = uri
-            else:
-                if title:
-                    found_url = "https://" + title if not title.startswith("http") else title
-
-        if found_url:
-            cleaned = clean_url(found_url)
+        if target_url:
+            cleaned = clean_url(target_url)
             d = root_domain(cleaned)
             if d and d not in IGNORE_DOMAINS and cleaned not in urls:
                 urls.append(cleaned)
@@ -382,10 +388,10 @@ def ask_gemini_grounded(
 ) -> tuple[str, list[str], dict]:
     """
     Call Gemini via centralized gemini_generate() with Google Search grounding enabled.
-    Falls back gracefully to AI Web Citation parsing if Search tool grounding is 429 quota limited.
+    Falls back gracefully to high-accuracy AI Web Citation parsing if Search tool grounding hits 429 rate limits.
     Returns: (answer_text, cited_urls, token_stats)
     """
-    # 1. Attempt Search Grounding Tool
+    # 1. Attempt Search Grounding Tool (Fast check: no redundant backoff if tool quota is restricted)
     res = gemini_generate(
         prompt=prompt,
         api_key=api_key,
@@ -393,9 +399,9 @@ def ask_gemini_grounded(
         use_search=True,
         json_mode=False,
         temperature=0.7,
-        delay_sec=delay_sec,
-        max_retries=max_retries,
-        status_callback=status_callback
+        delay_sec=0.0,
+        max_retries=0,
+        status_callback=None
     )
 
     if res.get("status") == "ok" and res.get("text"):
@@ -403,6 +409,15 @@ def ask_gemini_grounded(
         grounding_meta = res.get("grounding_metadata", {})
         urls = extract_grounding_citations(grounding_meta)
 
+        # Extract markdown links [Anchor](https://...)
+        md_urls = re.findall(r'\[([^\]]+)\]\((https?://[^)]+)\)', answer_text)
+        for _, mu in md_urls:
+            cleaned_mu = clean_url(mu.rstrip(".,;:)"))
+            d = root_domain(cleaned_mu)
+            if d and d not in IGNORE_DOMAINS and cleaned_mu not in urls:
+                urls.append(cleaned_mu)
+
+        # Extract raw text URLs
         text_urls = re.findall(r'https?://[^\s)\]"\'>]+', answer_text)
         for tu in text_urls:
             cleaned_tu = clean_url(tu.rstrip(".,;:)"))
@@ -428,15 +443,18 @@ def ask_gemini_grounded(
         )
         return answer_text, urls, token_stats
 
-    # 2. AI Web Citation Mode (Fallback)
+    # 2. AI Web Citation Mode (Fallback with high-accuracy prompting)
     if status_callback:
-        status_callback("Extracting AI Web Citations & authority references...")
+        status_callback("Extracting authentic AI citations & authority references...")
 
     citation_instruction = (
         f"{prompt}\n\n"
-        "INSTRUCTIONS FOR AI CITATIONS:\n"
-        "Provide a comprehensive, authoritative response. For every agency, vendor, directory, authority publication, or community platform you recommend or analyze, "
-        "you MUST cite and provide the full website URL (e.g., https://clutch.co/uk/seo-firms, https://fatjoe.com, https://searchengineland.com, https://reddit.com/r/SEO).\n"
+        "INSTRUCTIONS FOR ACCURATE AI CITATIONS & DIRECTORY BENCHMARKS:\n"
+        "Provide a comprehensive, authoritative and fact-based response. For every agency, vendor, service provider, directory (e.g. Clutch, Trustpilot, DesignRush, UpCity, GoodFirms), "
+        "authority publication, or community discussion you recommend or analyze, you MUST include:\n"
+        "1. Exact Company / Provider / Platform Name\n"
+        "2. Exact Website URL (e.g. https://domain.com/path)\n"
+        "3. Core strengths, why they are recommended, and target client tier\n"
         "At the end of your response, list all cited website URLs and references under a '### Cited Sources & Target URLs' section."
     )
 
@@ -455,6 +473,16 @@ def ask_gemini_grounded(
     if fallback_res.get("status") == "ok" and fallback_res.get("text"):
         answer_text = fallback_res["text"]
         urls = []
+        
+        # Extract markdown links [Anchor](https://...)
+        md_urls = re.findall(r'\[([^\]]+)\]\((https?://[^)]+)\)', answer_text)
+        for _, mu in md_urls:
+            cleaned_mu = clean_url(mu.rstrip(".,;:)"))
+            d = root_domain(cleaned_mu)
+            if d and d not in IGNORE_DOMAINS and cleaned_mu not in urls:
+                urls.append(cleaned_mu)
+
+        # Extract plain URLs
         raw_urls = re.findall(r'https?://[^\s)\]"\'>]+', answer_text)
         for u in raw_urls:
             cleaned_u = clean_url(u.rstrip(".,;:)"))
@@ -480,7 +508,7 @@ def ask_gemini_grounded(
         )
         return answer_text, urls, token_stats
 
-    raise RuntimeError(fallback_res.get("error") or "Could not retrieve AI answers. Please verify your Gemini API Key in the sidebar.")
+    raise RuntimeError(fallback_res.get("error") or "Could not retrieve AI answers. Please verify your Gemini API Key.")
 
 
 # ----------------------------------------------------------------------------
@@ -866,22 +894,21 @@ def main():
         )
         
         model_options = [
-            "gemini-2.5-flash (Recommended · Real Search Grounding)",
-            "gemini-2.0-flash (Fast Free Tier)",
-            "gemini-1.5-flash (Standard)",
-            "gemini-2.5-pro (Deep Reasoning)",
-            "gemini-1.5-pro (Extended Context)",
+            "gemini-3.1-flash-lite (Recommended · Fast Free Tier)",
+            "gemini-3.5-flash (High Intelligence & Deep Citations)",
+            "gemini-3.5-flash-lite (Fast Multi-Market)",
+            "gemini-3.8-flash (Next-Gen Flash)",
             "Custom Model..."
         ]
         chosen_option = st.selectbox(
             "Gemini Model",
             options=model_options,
             index=0,
-            help="Google AI Studio recommends gemini-2.5-flash for real-time Google Search Grounding."
+            help="Google AI Studio recommends gemini-3.1-flash-lite for rapid, rate-limit safe prospecting."
         )
         
         if chosen_option == "Custom Model...":
-            model_name = st.text_input("Custom Model Name", value="gemini-2.5-flash")
+            model_name = st.text_input("Custom Model Name", value="gemini-3.1-flash-lite")
         else:
             model_name = chosen_option.split(" ")[0]
 
@@ -1071,13 +1098,14 @@ def main():
     # Step 0: Free Google Gemini API Key (BYOK) - Prominent Main View
     # ------------------------------------------------------------------------
     if "gemini_api_key" not in st.session_state:
-        st.session_state["gemini_api_key"] = os.getenv("GEMINI_API_KEY", "")
+        st.session_state["gemini_api_key"] = (api_key or os.getenv("GEMINI_API_KEY", "")).strip()
 
     # Sync with sidebar value if provided
-    if api_key and api_key != st.session_state["gemini_api_key"]:
-        st.session_state["gemini_api_key"] = api_key
+    if api_key and api_key.strip() != st.session_state["gemini_api_key"]:
+        st.session_state["gemini_api_key"] = api_key.strip()
 
-    active_api_key = st.session_state["gemini_api_key"].strip()
+    active_api_key = st.session_state.get("gemini_api_key", "").strip()
+    effective_key = (active_api_key or api_key or os.getenv("GEMINI_API_KEY", "")).strip()
 
     st.markdown("""
     <div style="background: linear-gradient(135deg, rgba(27, 100, 181, 0.12) 0%, rgba(104, 184, 46, 0.10) 100%); border: 1px solid rgba(27, 100, 181, 0.35); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
@@ -1109,27 +1137,28 @@ def main():
             placeholder="AIzaSy... (Paste your free key here)",
             help="Get your free key at https://aistudio.google.com/app/apikey"
         )
-        if main_key_input != active_api_key:
-            st.session_state["gemini_api_key"] = main_key_input
-            active_api_key = main_key_input
-            api_key = main_key_input
+        if main_key_input.strip() != active_api_key:
+            st.session_state["gemini_api_key"] = main_key_input.strip()
+            active_api_key = main_key_input.strip()
+            api_key = main_key_input.strip()
+            effective_key = main_key_input.strip()
 
     with key_col2:
         st.write("")
         st.write("")
         if st.button("🧪 Verify Key", use_container_width=True):
-            if not active_api_key:
+            if not effective_key:
                 st.error("Please enter a key first.")
             else:
                 with st.spinner("Connecting to Gemini..."):
-                    t_res = gemini_generate(prompt="ping", api_key=active_api_key, model=model_name, delay_sec=0.0)
+                    t_res = gemini_generate(prompt="ping", api_key=effective_key, model=model_name, delay_sec=0.0)
                     if t_res.get("status") == "ok":
-                        st.success("✅ Active & Verified!")
+                        st.success(f"✅ Active & Verified! ({t_res.get('model', model_name)})")
                     else:
                         st.error(f"❌ Error: {t_res.get('error')}")
 
-    if active_api_key:
-        api_key = active_api_key
+    if effective_key:
+        api_key = effective_key
         st.markdown(
             '<div style="margin-bottom: 20px; font-size: 12px; color: #4ADE80; font-weight: 600;">'
             '✅ Google Gemini API Key is Active · Ready to Prospect Citations'
@@ -1235,8 +1264,6 @@ def main():
     # ------------------------------------------------------------------------
     # Execution Button
     # ------------------------------------------------------------------------
-    effective_key = (active_api_key or api_key or os.getenv("GEMINI_API_KEY", "")).strip()
-
     st.write("")
     run_btn = st.button(
         "🚀 Run Gemini Citation Prospector",

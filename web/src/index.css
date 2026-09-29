@@ -1,0 +1,235 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Dark Theme Default */
+    --bg: #0A0C10;
+    --surface: #10131A;
+    --surface-2: #161A23;
+    --surface-3: #1D222D;
+    
+    --border: rgba(255, 255, 255, 0.07);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    
+    --text: #E9ECF2;
+    --text-2: #A0A8B8;
+    --text-3: #6B7384;
+    
+    --brand: #1B64B5;
+    --brand-accent: #68B82E;
+    --brand-soft: rgba(27, 100, 181, 0.14);
+    --brand-accent-soft: rgba(104, 184, 46, 0.14);
+    
+    --success: #22C55E;
+    --warning: #F5A524;
+    --danger: #EF4444;
+    --info: #3B82F6;
+
+    /* Chart Palette */
+    --chart-client: #1B64B5;
+    --chart-comp-1: #8B5CF6;
+    --chart-comp-2: #EC4899;
+    --chart-comp-3: #14B8A6;
+    --chart-comp-4: #F97316;
+    --chart-comp-5: #64748B;
+
+    --elevation-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Light Theme Override */
+  .light {
+    --bg: #F7F8FA;
+    --surface: #FFFFFF;
+    --surface-2: #F1F3F6;
+    --surface-3: #E9ECF0;
+    
+    --border: #E4E7EC;
+    --border-strong: #D0D5DD;
+    
+    --text: #0E1116;
+    --text-2: #4A5261;
+    --text-3: #7A8394;
+    
+    --brand: #1B64B5;
+    --brand-accent: #5DA529;
+    --brand-soft: rgba(27, 100, 181, 0.08);
+    --brand-accent-soft: rgba(93, 165, 41, 0.08);
+    
+    --success: #16A34A;
+    --warning: #D97706;
+    --danger: #DC2626;
+    --info: #2563EB;
+
+    --chart-client: #1B64B5;
+    --chart-comp-1: #7C3AED;
+    --chart-comp-2: #DB2777;
+    --chart-comp-3: #0D9488;
+    --chart-comp-4: #EA580C;
+    --chart-comp-5: #475569;
+
+    --elevation-shadow: 0 12px 32px rgba(16, 24, 40, 0.12);
+    --card-shadow: 0 4px 16px rgba(16, 24, 40, 0.05);
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 22px;
+    letter-spacing: normal;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom Design Tokens mapped for Tailwind & Utility classes */
+@layer utilities {
+  .bg-app-bg { background-color: var(--bg); }
+  .bg-app-surface { background-color: var(--surface); }
+  .bg-app-surface-2 { background-color: var(--surface-2); }
+  .bg-app-surface-3 { background-color: var(--surface-3); }
+
+  .text-app-text { color: var(--text); }
+  .text-app-text-2 { color: var(--text-2); }
+  .text-app-text-3 { color: var(--text-3); }
+
+  .border-app-border { border-color: var(--border); }
+  .border-app-border-strong { border-color: var(--border-strong); }
+
+  .bg-brand { background-color: var(--brand); }
+  .text-brand { color: var(--brand); }
+  .border-brand { border-color: var(--brand); }
+  .bg-brand-soft { background-color: var(--brand-soft); }
+
+  .bg-brand-accent { background-color: var(--brand-accent); }
+  .text-brand-accent { color: var(--brand-accent); }
+  .bg-brand-accent-soft { background-color: var(--brand-accent-soft); }
+
+  .bg-success { background-color: var(--success); }
+  .text-success { color: var(--success); }
+  .bg-warning { background-color: var(--warning); }
+  .text-warning { color: var(--warning); }
+  .bg-danger { background-color: var(--danger); }
+  .text-danger { color: var(--danger); }
+  .bg-info { background-color: var(--info); }
+  .text-info { color: var(--info); }
+
+  /* Typography Scale */
+  .font-display {
+    font-size: 40px;
+    line-height: 48px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .font-h1 {
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .font-h2 {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .font-h3 {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 500;
+  }
+  .font-body {
+    font-size: 14px;
+    line-height: 22px;
+  }
+  .font-small {
+    font-size: 13px;
+    line-height: 20px;
+  }
+  .font-caption {
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+  .font-metric {
+    font-size: 32px;
+    line-height: 36px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Radius Scale */
+  .radius-input { border-radius: 6px; }
+  .radius-badge { border-radius: 6px; }
+  .radius-btn { border-radius: 10px; }
+  .radius-card { border-radius: 10px; }
+  .radius-panel { border-radius: 14px; }
+  .radius-sheet { border-radius: 14px; }
+  .radius-pill { border-radius: 9999px; }
+
+  /* Elevation Shadows */
+  .elevation-sheet {
+    box-shadow: var(--elevation-shadow);
+  }
+  .card-shadow {
+    box-shadow: var(--card-shadow);
+  }
+}
+
+/* Animations & Transitions */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--surface-3) 50%,
+    var(--surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.pulse-dot {
+  animation: pulseDot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Reduced Motion Compliance */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-3);
+}
