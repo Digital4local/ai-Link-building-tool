@@ -1069,24 +1069,102 @@ def main():
                 st.error(f"Invalid JSON file: {e}")
 
     # ------------------------------------------------------------------------
+    # Step 0: Free Google Gemini API Key (BYOK) - Prominent Main View
+    # ------------------------------------------------------------------------
+    if "gemini_api_key" not in st.session_state:
+        st.session_state["gemini_api_key"] = os.getenv("GEMINI_API_KEY", "")
+
+    # Sync with sidebar value if provided
+    if api_key and api_key != st.session_state["gemini_api_key"]:
+        st.session_state["gemini_api_key"] = api_key
+
+    active_api_key = st.session_state["gemini_api_key"].strip()
+
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, rgba(27, 100, 181, 0.12) 0%, rgba(104, 184, 46, 0.10) 100%); border: 1px solid rgba(27, 100, 181, 0.35); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+            <div>
+                <span style="background: rgba(104, 184, 46, 0.2); color: #68B82E; border: 1px solid rgba(104, 184, 46, 0.4); padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">
+                    100% FREE TO USE · ZERO BILLING · NO CARD REQUIRED
+                </span>
+                <h3 style="margin: 8px 0 2px 0; color: #E9ECF2; font-size: 20px; font-weight: 700;">
+                    🔑 Step 0: Enter Your Free Google Gemini API Key
+                </h3>
+                <p style="margin: 0; color: #94A3B8; font-size: 13px;">
+                    This tool runs queries directly on your Google AI Studio free quota. Your key is stored securely in this browser session only.
+                </p>
+            </div>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" style="background: #1B64B5; color: #FFFFFF; padding: 9px 18px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(27,100,181,0.35);">
+                Get Free API Key in 30s ↗
+            </a>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    key_col1, key_col2 = st.columns([3, 1])
+    with key_col1:
+        main_key_input = st.text_input(
+            "Enter Google Gemini API Key",
+            value=active_api_key,
+            type="password",
+            placeholder="AIzaSy... (Paste your free key here)",
+            help="Get your free key at https://aistudio.google.com/app/apikey"
+        )
+        if main_key_input != active_api_key:
+            st.session_state["gemini_api_key"] = main_key_input
+            active_api_key = main_key_input
+            api_key = main_key_input
+
+    with key_col2:
+        st.write("")
+        st.write("")
+        if st.button("🧪 Verify Key", use_container_width=True):
+            if not active_api_key:
+                st.error("Please enter a key first.")
+            else:
+                with st.spinner("Connecting to Gemini..."):
+                    t_res = gemini_generate(prompt="ping", api_key=active_api_key, model=model_name, delay_sec=0.0)
+                    if t_res.get("status") == "ok":
+                        st.success("✅ Active & Verified!")
+                    else:
+                        st.error(f"❌ Error: {t_res.get('error')}")
+
+    if active_api_key:
+        api_key = active_api_key
+        st.markdown(
+            '<div style="margin-bottom: 20px; font-size: 12px; color: #4ADE80; font-weight: 600;">'
+            '✅ Google Gemini API Key is Active · Ready to Prospect Citations'
+            '</div>',
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            '<div style="margin-bottom: 20px; font-size: 12px; color: #F59E0B; font-weight: 600;">'
+            '👉 Paste your free Gemini API Key above to unlock prompt generation and citation prospecting.'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+    # ------------------------------------------------------------------------
     # Campaign Inputs (Supports Multi-Market Mode)
     # ------------------------------------------------------------------------
-    st.subheader("1. Campaign Profile")
+    st.subheader("1. Business & Campaign Profile")
     col1, col2 = st.columns(2)
 
     with col1:
-        client_name = st.text_input("Client Brand Name", value="Digital Web Solutions")
-        client_domain = st.text_input("Client Domain", value="digitalwebsolutions.com")
-        service = st.text_input("Service / Niche (Plural)", value="link building agencies")
+        client_name = st.text_input("Your Business / Client Name", value="Digital4Local", help="Brand name to analyze for AI recommendations.")
+        client_domain = st.text_input("Your Business Domain", value="digital4local.com", help="Root domain of your website.")
+        service = st.text_input("Service / Niche (Plural)", value="AI growth and local SEO agencies", help="Target industry niche.")
         location_input = st.text_input(
             "Markets / Locations (e.g. 'the UK' or 'the UK, the US, Australia' for Multi-Market)",
-            value="the UK"
+            value="the UK, the US",
+            help="Target geographic regions."
         )
         markets_list = [m.strip() for m in location_input.split(",") if m.strip()] or ["the UK"]
 
     with col2:
         comp_text = st.text_area(
-            "Competitors (one per line: Brand | domain)",
+            "Competitors to Audit (one per line: Brand | domain)",
             value="FatJoe | fatjoe.com\nSiege Media | siegemedia.com\nPage One Power | pageonepower.com",
             height=135,
             placeholder="FatJoe | fatjoe.com\nSiege Media | siegemedia.com"
